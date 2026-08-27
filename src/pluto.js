@@ -21,6 +21,7 @@ function calPositPL_bdl( JD ){
 	var v  = new Array(0.0, 0.0, 0.0, 0.0);
 	var E  = new Array();
 	var nf = new Array(82, 19, 5);
+	var i, m, iv, imax, imin, f, cf, sf;
 
 // secular terms --- polynomial terms
 	var ax = new Array( 98083308510.0, -1465718392.0, 11528487809.0,  55397965917.0);

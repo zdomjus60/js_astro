@@ -1,0 +1,27 @@
+{
+  "name": "js_astro",
+  "version": "1.0.0",
+  "description": "Sample code for astrological calculation written by JavaScript.",
+  "main": "test.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zdomjus60/js_astro.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zdomjus60/js_astro/issues"
+  },
+  "homepage": "https://github.com/zdomjus60/js_astro#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "wrangler": "^4.126.0"
+  }
+}

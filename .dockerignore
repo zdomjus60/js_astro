@@ -1,0 +1,8 @@
+node_modules
+.git
+test.html
+test.js
+fly.toml
+Dockerfile
+.dockerignore
+*.md

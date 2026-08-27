@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>js_astro Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; background: #1a1a2e; color: #e0e0e0; }
+        h1 { color: #00d4ff; }
+        .result { background: #16213e; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .planet { color: #ffd700; }
+        .value { color: #00ff88; }
+        .label { color: #888; }
+    </style>
+</head>
+<body>
+    <h1>js_astro Test</h1>
+    <div id="output"></div>
+
+    <script src="src/math.js"></script>
+    <script src="src/astronomy.js"></script>
+    <script src="src/geodata.js"></script>
+    <script src="src/pluto.js"></script>
+    <script src="src/hekichan.js"></script>
+    <script src="src/metako.js"></script>
+    <script src="src/cuspcal.js"></script>
+
+    <script>
+        const output = document.getElementById('output');
+
+        function addResult(title, content) {
+            const div = document.createElement('div');
+            div.className = 'result';
+            div.innerHTML = `<strong>${title}</strong><pre>${content}</pre>`;
+            output.appendChild(div);
+        }
+
+        // Test 1: Solar Eclipse - April 8, 2024 (Total Solar Eclipse over North America)
+        // Dallas, Texas: 32.7767°N, 96.7970°W
+        const year1 = 2024, month1 = 4, day1 = 8, hour1 = 18, min1 = 17;
+        const lon1 = -96.7970, lat1 = 32.7767;
+
+        let planets1 = calPlanetPosition2(year1, month1, day1, hour1, min1, lon1, lat1);
+        let cusps1 = calHouseCusp2(year1, month1, day1, hour1, min1, lon1, lat1, 1);
+
+        let result1 = '';
+        result1 += `Date: ${year1}/${month1}/${day1} ${hour1}:${String(min1).padStart(2,'0')} local\n`;
+        result1 += `Location: Dallas, TX (${lat1}°N, ${lon1}°W)\n`;
+        result1 += `Julian Day: ${planets1[0].toFixed(6)}\n\n`;
+        result1 += `--- Planetary Positions (Ecliptic Longitude) ---\n`;
+        result1 += `Sun:     ${planets1[1].toFixed(4)}°\n`;
+        result1 += `Moon:    ${planets1[2].toFixed(4)}°\n`;
+        result1 += `Mercury: ${planets1[3].toFixed(4)}°\n`;
+        result1 += `Venus:   ${planets1[4].toFixed(4)}°\n`;
+        result1 += `Mars:    ${planets1[5].toFixed(4)}°\n`;
+        result1 += `Jupiter: ${planets1[6].toFixed(4)}°\n`;
+        result1 += `Saturn:  ${planets1[7].toFixed(4)}°\n`;
+        result1 += `Uranus:  ${planets1[8].toFixed(4)}°\n`;
+        result1 += `Neptune: ${planets1[9].toFixed(4)}°\n`;
+        result1 += `Pluto:   ${planets1[10].toFixed(4)}°\n\n`;
+        result1 += `Nodal Point: ${planets1[11].toFixed(4)}°\n`;
+        result1 += `Apogee:      ${planets1[12].toFixed(4)}°\n`;
+        result1 += `Ascendant:   ${planets1[13].toFixed(4)}°\n`;
+        result1 += `MC:          ${planets1[14].toFixed(4)}°\n\n`;
+        result1 += `--- Minor Planets ---\n`;
+        result1 += `Ceres:  ${planets1[15].toFixed(4)}°\n`;
+        result1 += `Pallas: ${planets1[16].toFixed(4)}°\n`;
+        result1 += `Juno:   ${planets1[17].toFixed(4)}°\n`;
+        result1 += `Vesta:  ${planets1[18].toFixed(4)}°\n`;
+        result1 += `Chiron: ${planets1[19].toFixed(4)}°\n\n`;
+        result1 += `--- House Cusps (Placidus) ---\n`;
+        for (let i = 1; i <= 12; i++) {
+            result1 += `House ${String(i).padStart(2)}: ${cusps1[i].toFixed(4)}°\n`;
+        }
+
+        addResult('Test 1: Solar Eclipse - April 8, 2024 (Dallas, TX)', result1);
+
+        // Test 2: Current time (user's local time approximation)
+        const now = new Date();
+        const year2 = now.getFullYear();
+        const month2 = now.getMonth() + 1;
+        const day2 = now.getDate();
+        const hour2 = now.getHours();
+        const min2 = now.getMinutes();
+
+        // Use Rome coordinates (approx)
+        const lon2 = 12.4964, lat2 = 41.9028;
+
+        let planets2 = calPlanetPosition2(year2, month2, day2, hour2, min2, lon2, lat2);
+
+        let result2 = '';
+        result2 += `Date: ${year2}/${String(month2).padStart(2,'0')}/${String(day2).padStart(2,'0')} ${String(hour2).padStart(2,'0')}:${String(min2).padStart(2,'0')} local\n`;
+        result2 += `Location: Rome, IT (${lat2}°N, ${lon2}°E)\n`;
+        result2 += `Julian Day: ${planets2[0].toFixed(6)}\n\n`;
+        result2 += `Sun:     ${planets2[1].toFixed(4)}° (${toZodiac(planets2[1])})\n`;
+        result2 += `Moon:    ${planets2[2].toFixed(4)}° (${toZodiac(planets2[2])})\n`;
+        result2 += `Mercury: ${planets2[3].toFixed(4)}° (${toZodiac(planets2[3])})\n`;
+        result2 += `Venus:   ${planets2[4].toFixed(4)}° (${toZodiac(planets2[4])})\n`;
+        result2 += `Mars:    ${planets2[5].toFixed(4)}° (${toZodiac(planets2[5])})\n`;
+        result2 += `Jupiter: ${planets2[6].toFixed(4)}° (${toZodiac(planets2[6])})\n`;
+        result2 += `Saturn:  ${planets2[7].toFixed(4)}° (${toZodiac(planets2[7])})\n`;
+
+        addResult('Test 2: Current Sky - Rome, IT', result2);
+
+        // Test 3: Historical - Moon Landing July 20, 1969
+        const year3 = 1969, month3 = 7, day3 = 20, hour3 = 20, min3 = 17;
+        const lon3 = -73.9857, lat3 = 40.7484; // New York (where broadcast was watched)
+
+        let planets3 = calPlanetPosition2(year3, month3, day3, hour3, min3, lon3, lat3);
+
+        let result3 = '';
+        result3 += `Date: ${year3}/${month3}/${day3} ${hour3}:${String(min3).padStart(2,'0')} local\n`;
+        result3 += `Location: New York (${lat3}°N, ${lon3}°W)\n`;
+        result3 += `Apollo 11 Moon Landing moment\n\n`;
+        result3 += `Sun:     ${planets3[1].toFixed(4)}°\n`;
+        result3 += `Moon:    ${planets3[2].toFixed(4)}°\n`;
+        result3 += `Mercury: ${planets3[3].toFixed(4)}°\n`;
+        result3 += `Venus:   ${planets3[4].toFixed(4)}°\n`;
+        result3 += `Mars:    ${planets3[5].toFixed(4)}°\n`;
+
+        addResult('Test 3: Moon Landing - July 20, 1969 (New York)', result3);
+
+        // Zodiac helper
+        function toZodiac(lon) {
+            const signs = ['Ar', 'Ta', 'Ge', 'Cn', 'Le', 'Vi', 'Li', 'Sc', 'Sg', 'Ca', 'Aq', 'Pi'];
+            const sign = Math.floor(((lon % 360) + 360) % 360 / 30);
+            const degree = lon % 30;
+            return `${signs[sign]} ${Math.floor(degree)}°${String(Math.floor((degree % 1) * 60)).padStart(2,'0')}'`;
+        }
+    </script>
+</body>
+</html>

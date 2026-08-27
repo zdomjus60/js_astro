@@ -72,6 +72,7 @@ function calHousePlacidus(LST, Lat, obl){
 	var X0   = 0.0;
 	var X1   = 0.0;
 	var d    = 0.0;
+	var nh   = 0.0;
 	var d0   = 1.0e-03;
 	var csp  = 0.0;
 	var cspx = 0.0;
@@ -253,7 +254,7 @@ function calHouseTopocentric(LST, Lat, obl){
 
 // Axial Rotation System
 function calHouseAxial(LST, Lat, obl){
-	var alpha, cspx, cspy;
+	var alpha, cspx, cspy, i, house;
 	var cusp = new Array();
 
 	for(i = 10;i < 16;i++){
@@ -276,7 +277,7 @@ function calHouseAxial(LST, Lat, obl){
 
 // Morinus House System
 function calHouseMorinus(LST, Lat, obl){
-	var Z, cspx, cspy;
+	var Z, cspx, cspy, i;
 	var cusp = new Array()
 
 	for(i = 1;i <= 12;i++){
