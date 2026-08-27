@@ -69,6 +69,24 @@ I never consider any Daylight Saving Time in past and future.
 
 This library assumes **eastern geographical longitude and northern geographical latitude as plus**(eg. Tokyo: 139E42 = +139.70, 35N41 = +35.68).
 
+## Ultracopernican revolution (364-part zodiac)
+
+`src/zodiac.js` adds an alternative zodiac & time cycle. It is a **credible alternative, not a replacement**: the traditional 12-sign zodiac keeps all its glory, history and meaning. This module simply asks "what if the zodiac were built from the sky itself, with no calendar leftover?"
+
+The idea, in the spirit of Copernicus (geometry over convention):
+
+- The circle is divided into **364 equal parts** = **13 signs x 28** (the tradition's 12 signs + **Ophiuchus**, the astronomer's sign the tradition chose to leave out between Scorpio and Sagittarius).
+- Coordinate `z = 0` is anchored to the **real winter solstice** (Sun at 0° Capricorn). Solstices are found by bisection on the Sun's ecliptic longitude, so the origin is astronomically real, a cardinal point of the sky itself.
+- The zodiac year runs from one real winter solstice to the next (**≈ 365.2427 days**).
+- **1 zodiac day = year / 364** (≈ 1.003414 conventional days). Hours, minutes and seconds scale from the zodiac day: the *second* becomes a variable convention adapting to the real geometry. The sky is never bent to fit the calendar.
+- A zodiac time is expressed as a pure position: e.g. `Cancer 00 14:58:23` means the Sun-cycle has reached 14h58m23s after the start of Cancer 00 = 0° (the solstice).
+
+Reversible conversions `lon ↔ z` and the full description helpers live in `src/zodiac.js` (uses `calPlaPos`/`correctTDT`/`calJDz`/`cnvCalendar`).
+
+REST endpoint: `GET /api/zodiac?year&month&day&hour&minute&lon&lat` returns planetary positions and points as 364-coordinates plus `zodiacTime`. Available both in the Express server and the Cloudflare Worker.
+
+Astrology stays astrology here: the same signs, the same sky, the same Earth-bound point of view — only the ruler is the real solstice instead of the civil calendar.
+
 ## Demonstration
 To test this library, try [this](http://astsakai.halfmoon.jp/fortune/platest_js.html).
 

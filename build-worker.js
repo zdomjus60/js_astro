@@ -9,13 +9,43 @@ const srcFiles = [
     'src/pluto.js',
     'src/hekichan.js',
     'src/metako.js',
-    'src/cuspcal.js'
+    'src/cuspcal.js',
+    'src/zodiac.js'
 ];
 
 const handler = `
 const ZODIAC = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const ZODIAC_ABBR = ['Ar','Ta','Ge','Cn','Le','Vi','Li','Sc','Sg','Ca','Aq','Pi'];
 const HOUSE_NAMES = {1:'Placidus',2:'Campanus',3:'Regiomontanus',4:'Koch',5:'Topocentric',6:'Axial',7:'Morinus'};
+
+function zodiac364Payload(p) {
+    return {
+        description: 'Credible alternative to the 12-sign zodiac: 364 parts = 13 signs x 28, origin = real winter solstice',
+        julianDay: parseFloat(p[0].toFixed(6)),
+        planets: {
+            sun: describeZodiac364(p[1]),
+            moon: describeZodiac364(p[2]),
+            mercury: describeZodiac364(p[3]),
+            venus: describeZodiac364(p[4]),
+            mars: describeZodiac364(p[5]),
+            jupiter: describeZodiac364(p[6]),
+            saturn: describeZodiac364(p[7]),
+            uranus: describeZodiac364(p[8]),
+            neptune: describeZodiac364(p[9]),
+            pluto: describeZodiac364(p[10])
+        },
+        points: {
+            node: describeZodiac364(p[11]), apogee: describeZodiac364(p[12]),
+            asc: describeZodiac364(p[13]), mc: describeZodiac364(p[14])
+        },
+        minorPlanets: {
+            ceres: describeZodiac364(p[15]), pallas: describeZodiac364(p[16]),
+            juno: describeZodiac364(p[17]), vesta: describeZodiac364(p[18]),
+            chiron: describeZodiac364(p[19])
+        },
+        zodiacTime: jdToZodiacTime(p[0])
+    };
+}
 
 function toZodiac(lon) {
     const l = ((lon % 360) + 360) % 360;
@@ -94,6 +124,7 @@ h1{color:#00d4ff}a{color:#ffd700}code{background:#16213e;padding:2px 6px;border-
 <p><strong>GET /api/planets</strong> - <a href="/api/planets?year=1960&month=6&day=8&hour=19&minute=20&lon=11&lat=45.19">test</a></p>
 <p><strong>GET /api/houses</strong> - <a href="/api/houses?year=1960&month=6&day=8&hour=19&minute=20&lon=11&lat=45.19&system=1">test</a> (system 1-7)</p>
 <p><strong>GET /api/chart</strong> - <a href="/api/chart?year=1960&month=6&day=8&hour=19&minute=20&lon=11&lat=45.19">test</a></p>
+<p><strong>GET /api/zodiac</strong> - 364-part zodiac + zodiac time - <a href="/api/zodiac?year=1960&month=6&day=8&hour=19&minute=20&lon=11&lat=45.19">test</a> ✦ Ultracopernican</p>
 <h2>Parameters</h2>
 <code>year month day hour minute lon lat</code> (local time), optional <code>system</code> 1-7
 <h2>House systems</h2>
@@ -143,7 +174,12 @@ export default {
                 { houseSystem: { id: system, name: HOUSE_NAMES[system] || 'Unknown' }, houses }));
         }
 
-        return json(null, { error: 'Not found. Try /api/planets, /api/houses, /api/chart' }, 404);
+        if (path === '/api/zodiac') {
+            const p = calPlanetPosition2(year, month, day, hour, minute, lon, lat);
+            return json(null, Object.assign(base, zodiac364Payload(p)));
+        }
+
+        return json(null, { error: 'Not found. Try /api/planets, /api/houses, /api/chart, /api/zodiac' }, 404);
     }
 };
 `;

@@ -41,6 +41,11 @@ app.get('/', (req, res) => {
         <a href="/api/chart?year=1960&month=6&day=8&hour=19&minute=20&lon=11&lat=45.19">Test full chart</a>
     </div>
 
+    <div class="endpoint">
+        <strong>GET /api/zodiac</strong> - 364-part zodiac + zodiac time (Ultracopernican)<br>
+        <a href="/api/zodiac?year=1960&month=6&day=8&hour=19&minute=20&lon=11&lat=45.19">Test ultracopernican chart</a>
+    </div>
+
     <h2>Parameters</h2>
     <code>year</code>, <code>month</code>, <code>day</code>, <code>hour</code>, <code>minute</code>, <code>lon</code>, <code>lat</code><br>
     Optional: <code>system</code> (1=Placidus, 2=Campanus, 3=Regiomontanus, 4=Koch, 5=Topocentric, 6=Axial, 7=Morinus)
@@ -68,7 +73,8 @@ const files = [
     'src/pluto.js',
     'src/hekichan.js',
     'src/metako.js',
-    'src/cuspcal.js'
+    'src/cuspcal.js',
+    'src/zodiac.js'
 ];
 
 const sandbox = { Math, console, Array, Number, String, parseInt, parseFloat, isNaN, Date };
@@ -77,7 +83,7 @@ for (const f of files) {
     vm.runInContext(fs.readFileSync(f, 'utf-8'), sandbox, { filename: f });
 }
 
-const { calPlanetPosition2, calHouseCusp2 } = sandbox;
+const { calPlanetPosition2, calHouseCusp2, describeZodiac364, jdToZodiacTime } = sandbox;
 
 // Helper: convert longitude to zodiac
 function toZodiac(lon) {
@@ -148,6 +154,56 @@ app.get('/api/planets', (req, res) => {
             vesta:  toZodiac(p[18]),
             chiron: toZodiac(p[19])
         }
+    });
+});
+
+// GET /api/zodiac - 364-part zodiac (revolution ultracopernicana)
+app.get('/api/zodiac', (req, res) => {
+    const { year, month, day, hour, minute, lon, lat } = req.query;
+
+    if (!year || !month || !day || !hour || !minute || !lon || !lat) {
+        return res.status(400).json({
+            error: 'Missing parameters',
+            required: ['year','month','day','hour','minute','lon','lat']
+        });
+    }
+
+    const y = parseInt(year), m = parseInt(month), d = parseInt(day);
+    const h = parseInt(hour), mi = parseInt(minute);
+    const lo = parseFloat(lon), la = parseFloat(lat);
+
+    const p = calPlanetPosition2(y, m, d, h, mi, lo, la);
+    const t = jdToZodiacTime(p[0]);
+
+    const planets = {};
+    const names = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
+    for (let i = 0; i < 10; i++) planets[names[i]] = describeZodiac364(p[i + 1]);
+
+    const points = {
+        node:   describeZodiac364(p[11]),
+        apogee: describeZodiac364(p[12]),
+        asc:    describeZodiac364(p[13]),
+        mc:     describeZodiac364(p[14])
+    };
+
+    const minorPlanets = {
+        ceres:  describeZodiac364(p[15]),
+        pallas: describeZodiac364(p[16]),
+        juno:   describeZodiac364(p[17]),
+        vesta:  describeZodiac364(p[18]),
+        chiron: describeZodiac364(p[19])
+    };
+
+    res.json({
+        date: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`,
+        time: `${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`,
+        location: { longitude: lo, latitude: la },
+        julianDay: parseFloat(p[0].toFixed(6)),
+        description: 'Credible alternative to the 12-sign zodiac: 364 parts = 13 signs x 28, origin = real winter solstice',
+        planets,
+        points,
+        minorPlanets,
+        zodiacTime: t
     });
 });
 
@@ -260,6 +316,7 @@ app.listen(PORT, () => {
     console.log('  GET /api/planets  - Planetary positions');
     console.log('  GET /api/houses   - House cusps');
     console.log('  GET /api/chart    - Full chart (planets + houses)');
+    console.log('  GET /api/zodiac   - 364-part zodiac + zodiac time');
     console.log('');
     console.log('Parameters: year, month, day, hour, minute, lon, lat');
     console.log('Optional: system (1-7) for house system');
