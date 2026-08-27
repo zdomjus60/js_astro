@@ -1,18 +1,18 @@
 /*
- * 天文計算関係スクリプト version 0.22j
+ * Astronomical calculation scripts version 0.22j
  * Copyright (c) 1999-2001, 2004, 2005, 2017, 2021, 2024, 2025 Yoshihiro Sakai & Sakai Institute of Astrology
  * This software is released under the MIT License.
  * http://opensource.org/licenses/mit-license.php
- * 2017/06/05[0.16j] 軌道要素６パラ版に対応
- * 2017/09/15[0.17j] ΔＴの計算式を見直すついでに出典を書く
- * 2021/02/27[0.18j] 二体問題まわりロジック見直し
- * 2024/12/20[0.19j] ΔＴ計算式見直し
- * 2025/04/14[0.20j] 均時差計算式見直し
- * 2025/04/16[0.21j] 地方恒星時・黄道傾斜角計算式見直し
- * 2025/08/18[0.22j] 章動・黄道傾斜角計算ロジック見直し
+ * 2017/06/05[0.16j] Added support for 6-parameter orbital elements version
+ * 2017/09/15[0.17j] Revised Delta-T calculation formula and added source references
+ * 2021/02/27[0.18j] Revised two-body problem logic
+ * 2024/12/20[0.19j] Revised Delta-T calculation formula
+ * 2025/04/14[0.20j] Revised equation of time calculation formula
+ * 2025/04/16[0.21j] Revised local sidereal time and obliquity calculation formulas
+ * 2025/08/18[0.22j] Revised nutation and obliquity calculation logic
  */
 
-// グレゴリオ暦専用！
+// Gregorian calendar only!
 function cnvCalendar( JD ){
 	JD += 0.5;
 	var Z = Math.floor( JD );
@@ -43,18 +43,18 @@ function cnvCalendar( JD ){
 	return res;
 }
 
-// その日のユリウス日を計算する
-function calJD(ye, mo, da, ho, mi){ // 実数体上
+// Calculate the Julian Day Number for a given date
+function calJD(ye, mo, da, ho, mi){ // real number domain
 	var y0 = (mo > 2) ? ye : (ye -  1);
 	var m0 = (mo > 2) ? mo : (mo + 12);
 	var JD = Math.floor(365.25 * y0) + Math.floor(y0 / 400) - Math.floor(y0 / 100);
 	JD	+= Math.floor(30.59 * (m0 - 2)) + da;
-	JD	+= ((ho - 9) * 60.0 + mi) / 1440.0 + 1721088.5;
+	JD	+= (ho * 60.0 + mi) / 1440.0 + 1721088.5;
 
 	return JD;
 }
 
-function cnvJDr( JD ){ // 実数体→整数環
+function cnvJDr( JD ){ // real number to integer domain
 	var date = cnvCalendar(JD);
 	var ye = date[ 0 ];
 	var mo = date[ 1 ];
@@ -64,7 +64,7 @@ function cnvJDr( JD ){ // 実数体→整数環
 	return JDz;
 }
 
-function calJDz(year, month, day){ // 整数環上
+function calJDz(year, month, day){ // integer domain
 	var yt = year;
 	var mt = month;
 	var dt = day;
@@ -81,7 +81,7 @@ function calJDz(year, month, day){ // 整数環上
 	return JD;
 }
 
-// d, Tを配列で返す。
+// Return d, T as array.
 function calTimeCoefficient( JD ){
 	var d = JD - 2451545.0;
 	var T = d / 36525.0;
@@ -90,7 +90,7 @@ function calTimeCoefficient( JD ){
 	return coef;
 }
 
-// 軌道要素６パラ版→通常の軌道要素
+// 6-parameter orbital elements version to standard orbital elements
 // a : semi-major axis (au).
 // l : mean longitude (degree).
 // h : e * sin(pi).
@@ -113,7 +113,7 @@ function convertOrbitalElement( a, l, h, k, p, q ) {
 	return result;
 }
 
-// まとめて軌道計算。返値は（黄経、黄緯、動径）。
+// Batch orbital calculation. Returns (ecliptic longitude, ecliptic latitude, radius vector).
 function orbitWork(L, opi, omg, i, e, a){
 	var M = mod360(L - opi);
 	var E = mod360(solveKepler(M, e));
@@ -135,7 +135,7 @@ function orbitWork(L, opi, omg, i, e, a){
 	return res;
 }
 
-// Kepler方程式(M = E - e sinE)を解く。
+// Solve Kepler's equation (M = E - e sinE).
 function solveKepler(M, e){
 	var Mr = M * deg2rad;
 	var Er = Mr;
@@ -147,7 +147,7 @@ function solveKepler(M, e){
 	return Er / deg2rad;
 }
 
-// 日心位置から地心位置へコンバートし、地心黄経を返す。
+// Convert from heliocentric to geocentric position, return geocentric ecliptic longitude.
 function convertGeocentric( earthCoor, planetCoor ){
 	var lp, bp, rp, ls, bs, rs;
 
@@ -179,7 +179,7 @@ function convertGeocentric( earthCoor, planetCoor ){
 	return res;
 }
 
-// 黄道座標系から赤道座標系へ変換する。
+// Convert from ecliptic to equatorial coordinate system.
 function convertEquatorial(lon, lat, obl){
 	var xs = cos4deg(lon) * cos4deg(lat);
 	var ys = sin4deg(lon) * cos4deg(lat);
@@ -197,7 +197,7 @@ function convertEquatorial(lon, lat, obl){
 	return res;
 }
 
-// 歳差補正
+// Precession correction
 function coordinateConvertFromJ2000( arg ){
 	var zeta, zz, theta;
 	var x, y, z, xd, yd, zd, xs, ys, zs;
@@ -232,19 +232,19 @@ function coordinateConvertFromJ2000( arg ){
 	return res;
 }
 
-// 地方恒星時計算
+// Local sidereal time calculation (old)
 function calLST_old(JD, ho, mi, lo){
 	var JD0 = Math.floor(JD - 0.5) + 0.5;
 	var T = (JD0 - 2451545.0) / 36525.0;
 	var UT = (JD - JD0) * 360.0 * 1.002737909350795;
 	if( UT < 0 ) UT += 360.0;
 
-	//グリニッジ恒星時計算
+	//Greenwich sidereal time calculation
 	var GST  = 0.279057273 + 100.0021390378 * T + 1.077591667e-06 * T * T;
 	    GST  = GST - Math.floor(GST);
 	    GST *= 360.0;
 
-	// 地方恒星時計算＋章動補正
+	// Local sidereal time calculation + nutation correction
 	var LST = mod360(GST + UT + lo);
 	var dpsi = calNutation(JD);
 	var eps  = calOblique(JD);
@@ -254,7 +254,7 @@ function calLST_old(JD, ho, mi, lo){
 	return LST;
 }
 
-// いまどきの地方恒星時計算
+// Modern local sidereal time calculation
 function calLST(JDut, ho, mi, lo) {
 	const Du = JDut - 2451545.0;
 
@@ -287,7 +287,7 @@ function calLST(JDut, ho, mi, lo) {
 	return LASTd;
 }
 
-// 黄道傾斜角を計算する関数
+// Function to calculate obliquity of the ecliptic (old)
 function calOblique_old(JD ){
 	var T = (JD - 2451545.0) / 36525.0;
 	var Omg = mod360(125.00452 - T *   1934.136261);
@@ -323,7 +323,7 @@ function calOblique( JD ){
 	return (e + deps) / 3600.0;
 }
 
-// 章動を計算する関数（簡略版）
+// Function to calculate nutation (simplified version)
 function calNutation( JD ){
 	const T = (JD - 2451545.0) / 36525.0;
 
@@ -345,7 +345,7 @@ function calNutation( JD ){
 	return dpsi;
 }
 
-// 均時差を計算する関数
+// Function to calculate equation of time (old)
 function calEqT_old( JD ){
 	var  T = ( JD - 2451545.0 ) / 36525.0;
 
@@ -373,7 +373,7 @@ function calEqT_old( JD ){
 }
 
 // cf. https://aa.usno.navy.mil/faq/sun_approx
-// 軌道要素： https://ssd.jpl.nasa.gov/planets/approx_pos.html
+// Orbital elements: https://ssd.jpl.nasa.gov/planets/approx_pos.html
 function calEqT( JD ) {
 	const T = (JD - 2451545.0) / 36525.0;
 
@@ -404,7 +404,7 @@ function calEqT( JD ) {
 
 ////////////////////////////////
 
-// カレンダー関係。
+// Calendar functions.
 function calDayOfWeek(year, month, day){
 	var JD = calJDz(year, month, day);
 	var you = (JD + 1) % 7;
@@ -431,10 +431,10 @@ function maxday(year, month){
 	return md;
 }
 
-// ΔＴを管理する関数
+// Function to manage Delta-T
 // formula A : Notes Scientifiques et Techniques du Bureau des Longitudes, nr. S055
 // from ftp://cyrano-se.obspm.fr/pub/6_documents/4_lunar_tables/newexp.pdf
-// formula D : Addendum 2020 to ‘Measurement of the Earth’s rotation: 720 BC to AD 2015
+// formula D : Addendum 2020 to 窶弄easurement of the Earth窶冱 rotation: 720 BC to AD 2015
 // from https://royalsocietypublishing.org/doi/suppl/10.1098/rspa.2020.0776
 function correctTDT(JD){
 	var year = ( JD - 2451545.0 ) / 365.2425 + 2000.0;

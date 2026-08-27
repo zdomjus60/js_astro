@@ -1,28 +1,28 @@
 /*
- * 占星術計算エンジン「めたこ」 version 0.20j at 2017/04/30, 2017/05/05
+ * Astrology calculation engine "Metako" version 0.20j at 2017/04/30, 2017/05/05
  * Copyright (c) 1999-2001, 2003, 2004, 2017 Yoshihiro Sakai & Sakai Institute of Astrology
  * This software is released under the MIT License.
  * http://opensource.org/licenses/mit-license.php
  */
 
 var planame = ["",
-    "太陽", "月",   "水星",   "金星",   "火星",
-    "木星", "土星", "天王星", "海王星", "冥王星",
-	"ノード", "リリス", "上昇点", "南中点",
-	"セレス", "パラス", "ジュノー", "ベスタ", "キローン",
-	"キューピッド", "ハデス", "ゼウス", "クロノス",
-	"アポロン", "アドメトス", "バルカヌス", "ポセイドン"];
+    "Sun", "Moon", "Mercury", "Venus", "Mars",
+    "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto",
+	"Node", "Lilith", "Ascendant", "MC",
+	"Ceres", "Pallas", "Juno", "Vesta", "Chiron",
+	"Cupid", "Hades", "Zeus", "Chronos",
+	"Apollo", "Admetos", "Vulcanus", "Poseidon"];
 var planame6 = ["",
-    "太陽　", "月　　", "水星　", "金星　", "火星　",
-    "木星　", "土星　", "天王星", "海王星", "冥王星",
-	"ノード", "リリス", "上昇点", "南中点",
-	"セレス", "パラス", "ジュノ", "ベスタ", "キロン",
-	"クピド", "ハデス", "ゼウス", "クロノ",
-	"アポロ", "アドメ", "バルカ", "ポセイ"];
+    "Sun   ", "Moon  ", "Mercury", "Venus ", "Mars  ",
+    "Jupiter", "Saturn ", "Uranus ", "Neptune", "Pluto  ",
+	"Node  ", "Lilith ", "Asc    ", "MC     ",
+	"Ceres ", "Pallas ", "Juno   ", "Vesta  ", "Chiron ",
+	"Cupid ", "Hades  ", "Zeus   ", "Chron  ",
+	"Apollo", "Admeto", "Vulcan ", "Poseid"];
 var sgnname = [
-    "牡羊座", "牡牛座", "双子座", "蟹　座", "獅子座", "乙女座",
-    "天秤座", "蠍　座", "射手座", "山羊座", "水瓶座", "魚　座"];
-var sgnS = ["羊", "牛", "双", "蟹", "獅", "乙", "秤", "蠍", "射", "山", "瓶", "魚"];
+    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+var sgnS = ["Ar", "Ta", "Ge", "Ca", "Le", "Vi", "Li", "Sc", "Sa", "Cp", "Aq", "Pi"];
 
 function convertPlanetHouse( pla, csp ){
 	var hse = new Array();
@@ -53,7 +53,7 @@ function CnvPlanetHouse0( pos, csp){
 
 // ----------------------------------
 
-//離角計算（アスペクトタイプ）
+//Angular distance calculation (aspect type)
 function angle(obj1, obj2){
     var dist = obj2 - obj1;
     var ang  = acos4deg(cos4deg(dist));
@@ -73,7 +73,7 @@ function angle1(obj, csp){
 	return ang;
 }
 
-// 角度差→アスペクト変換
+// Angle difference to aspect conversion
 function checkAspect(ang, deforb){
 	var asp = checkAspectStrictly(ang, deforb, 0.0);
 	var asptype = asp[ 0 ];
@@ -110,7 +110,7 @@ function checkAspectStrictly(asp, orb1, orb2){
 	return result;
 }
 
-// 前？　後ろ？
+// Forward or backward?
 function ChkPos(to, from){
 	var diff = to - from;
 	if(diff >= +180.0) diff -= 360.0;
@@ -119,7 +119,7 @@ function ChkPos(to, from){
 	return diff;
 }
 
-// 逆行中？
+// In retrograde?
 function checkRetrograde(ye, mo, da, ho, mi){
 	var pos0 = calPlanetPosition(ye, mo, da, ho, mi - 1, 48);
 	var pos1 = calPlanetPosition(ye, mo, da, ho, mi + 1, 48);
@@ -134,7 +134,7 @@ function checkRetrograde(ye, mo, da, ho, mi){
 	return ret;
 }
 
-//絶対度数→サイン変換
+// Absolute degree to sign conversion
 function cnvSign( adeg ){
 	adeg = mod360(adeg);
 	var sgn = Math.floor(adeg / 30.0);
@@ -142,16 +142,16 @@ function cnvSign( adeg ){
 	return sgn;
 }
 
-// 絶対度数→サイン文字列変換
+// Absolute degree to sign string conversion
 function cnv2kanji( adeg ){
 	adeg = mod360(adeg);
 	var sgn = Math.floor(adeg / 30.0);
 	var deg = sprintf("%2d", Math.floor(adeg - sgn * 30.0));
 	var min = sprintf("%02d", Math.floor((adeg - (sgn * 30 + deg)) * 60.0));
-	return sprintf( "%s%2d度%02d分", sgnname[ sgn ], deg, min );
+	return sprintf( "%s%2dﾂｰ%02d'", sgnname[ sgn ], deg, min );
 }
 
-// 絶対度数→サイン文字列変換
+// Absolute degree to sign string conversion
 function cnv2knj( adeg ){
 		adeg = mod360(adeg);
 		var sgn = Math.floor(adeg / 30.0);
@@ -160,14 +160,14 @@ function cnv2knj( adeg ){
 		return sprintf( "%2d%s%02d", deg, sgnS[sgn], min );
 }
 
-// 天体ＩＤ→記号
+// Celestial body ID to symbol
 function cnv2glyphP( pid ){
 	var str;
 	var strPlanet = new Array("As", "Mc");
 
 	var gadr0 = "<img src=\"";
 	var gadr1 = "../image/astropict/planet/p";
-	var gadr2 = ".png\" alt=\"";
+	var gadr2 = ".png\" alt=\"\"";
 	var gadr3 = "\">";
 
 	if(pid <= 12){
@@ -180,11 +180,11 @@ function cnv2glyphP( pid ){
 	return str;
 }
 
-// 絶対度数→サイン記号列変換
+// Absolute degree to sign symbol string conversion
 function cnv2glyph( adeg ){
 	var gadr0 = "<img src=\"";
 	var gadr1 = "../image/astropict/sign/s";
-	var gadr2 = ".png\" alt=\"";
+	var gadr2 = ".png\" alt=\"\"";
 	var gadr3 = "\">";
 
 	adeg = mod360(adeg);
@@ -198,11 +198,11 @@ function cnv2glyph( adeg ){
 	return str;
 }
 
-// 絶対度数→アスペクト記号列変換
+// Absolute degree to aspect symbol string conversion
 function asp2glyph( asp, orb1, orb2 ){
 	var str;
 	var gadr0 = "<img src=\"../image/astropict/aspect/a";
-	var gadr1 = ".png\" alt=\"";
+	var gadr1 = ".png\" alt=\"\"";
 	var gadr2 = "\">";
 	var aspTable = [0, 30, 36, 45, 60, 72, 90, 120, 135, 144, 150, 180];
 

@@ -1,5 +1,5 @@
 /*
- * ハウスカスプ計算ルーチン
+ * House cusp calculation routine
  * Copyright (c) 1999-2001, 2017 Yoshihiro Sakai & Sakai Institute of Astrology
  * This software is released under the MIT License.
  * http://opensource.org/licenses/mit-license.php
@@ -50,7 +50,7 @@ function calHouseCusp2(ye, mo, da, ho, mi, Lon, Lat, htype){
 
 // for Koch & Topocentric House System
 function calAsc(lst, lat, obl){
-	// ASC計算
+	// ASC calculation
 	var ASCx = cos4deg(lst);
 	var ASCy = -(sin4deg(obl) * tan4deg(lat));
 	ASCy    -= cos4deg(obl) * sin4deg(lst);

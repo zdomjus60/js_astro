@@ -1,5 +1,5 @@
 /*
- * 定数定義／数学関数スクリプト version 0.001j at 2017/04/27
+ * Constants and mathematical functions script version 0.001j at 2017/04/27
  * Copyright (c) 1999-2001, 2017 Yoshihiro Sakai & Sakai Institute of Astrology
  * This software is released under the MIT License.
  * http://opensource.org/licenses/mit-license.php

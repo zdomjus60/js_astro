@@ -8,10 +8,21 @@ This library intent to:
 
 ## Requirement
 ### Environment
-Newest Browser, but all comments are written in Japanese(Shift-JIS).
+Newest Browser.
 
 ### Library
 Some functions requires [spirntf.js](https://github.com/alexei/sprintf.js), but if you don't want to use function `cnv2*`, not required.
+
+## Credits
+This is a fork of [js_astro](https://github.com/astsakai/js_astro) by **Yoshihiro Sakai & Sakai Institute of Astrology**.
+
+Original library is written in Japanese (Shift-JIS encoding) with hardcoded Japan Standard Time (UTC+0900) timezone.
+
+This fork makes the following changes:
+- Translated all comments from Japanese to English
+- Converted source files from Shift-JIS to UTF-8 encoding
+- Removed hardcoded Japan time offset (UTC+0900) from `calJD()` function — the library now accepts local time directly
+- Translated Japanese prefecture names to English in `geodata.js`
 
 ## License
 Files in this repository are released under MIT license.
@@ -53,7 +64,7 @@ I assume Pluto as major planet and Ceres as minor planet, which they are dwarf p
 
 **Positions of minor planets can calculate between December 30, 1924 12:00 TT and December 31, 2124 12:00 TT only.**
 
-Timezone used in this library is **Japan Standard Time(UTC+0900)**. You may consider to wrapper function to convert your local timezone.
+Timezone: This library accepts local time. The caller is responsible for providing the correct local time for the given longitude.
 I never consider any Daylight Saving Time in past and future.
 
 This library assumes **eastern geographical longitude and northern geographical latitude as plus**(eg. Tokyo: 139E42 = +139.70, 35N41 = +35.68).

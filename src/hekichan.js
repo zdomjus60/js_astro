@@ -1,39 +1,39 @@
 /*
- * 天体位置計算エンジン「はいぱーへきちゃん」 version 1.00-j08
+ * Celestial position calculation engine "Hapy Hekichan" version 1.00-j08
  * Copyright (c) 1999-2004, 2017, 2021, 2024, 2025 Yoshihiro Sakai & Sakai Institute of Astrology
  * This software is released under the MIT License.
  * http://opensource.org/licenses/mit-license.php
  *
  * This library uses simplified VSOP87-D, ELP2000-82B, PLUTO-95 developed by
  * Bureau des Longitudes, French. This library valids 1700-2100 Common Era.
- * 2000/03/19[h02] 一応、第１次光行差と章動の補正を入れといた。
- * 2000/07/09[h03] 赤道座標系への変換を容易にするためフルセットで返すようにした。
- * 2000/09/25[h04] ノードとリリスの計算法をとある論文に基づき変更。
- * 2001/03/18[h05] 原則として冥王星はAstronomical Algorithms方式で計算する。
- * 2001/04/23[h06] 天体位置計算の仕掛けをちょこっと変更
- * 2001/07/09[h07] 光行差の計算方式を変更
- * 2001/07/13[h08] 月の計算をパワーアップ！
- * 2002/09/14[h09] 太陽と月の速度の計算式を追加
- * 2003/01/01[h10] なぜか入っていたあほなバグを除去。
- * 2003/01/16[h11] なぜか入っていたあほなバグをさらに除去。
- * 2003/08/29[h12] 黄道傾斜角が間違ってました。
- * 2004/01/09[h13] ルナーリターンを計算する関数を追加。
- * 2004/01/11[h14] ソーラーリターン関数を追加、黄道傾斜角と章動を分離。
- * 2004/01/11[h15] 1700～2100年以外の冥王星を軌道要素で計算するようにした。
- * 2017/04/27[j01] JavaScriptに移植。
- * 2017/05/25[j02] 冥王星の軌道要素を別ロジックに入れ替え。
- * 2017/06/05[j03] 軌道要素６パラ版に対応
- * 2017/08/07[j04] 冥王星の計算式がおかしなことになっていた。ついでにj02取り消し
- * 2021/02/27[j05] 冥王星の軌道要素計算式を見直し
- * 2024/12/20[j06] 四大小惑星＆キローンの接触軌道要素近似式対応
- * 2025/02/15[j07] 小惑星の光行差補正を大惑星に合わせる
- * 2025/07/28[j08] 接触軌道要素 Chebyshev 近似多項式を JPL Horizons System 生成結果から再計算
+ * 2000/03/19[h02] Added first-order aberration and nutation corrections.
+ * 2000/07/09[h03] Changed to return full set for easier equatorial coordinate conversion.
+ * 2000/09/25[h04] Changed node and Lilith calculation method based on a certain paper.
+ * 2001/03/18[h05] Pluto is now calculated using Astronomical Algorithms method by default.
+ * 2001/04/23[h06] Slightly changed the mechanism of celestial position calculation.
+ * 2001/07/09[h07] Changed aberration calculation method.
+ * 2001/07/13[h08] Enhanced Moon calculation!
+ * 2002/09/14[h09] Added Sun and Moon velocity calculation formulas.
+ * 2003/01/01[h10] Removed a stupid bug that was somehow present.
+ * 2003/01/16[h11] Removed another stupid bug that was somehow present.
+ * 2003/08/29[h12] Obliquity of the ecliptic was incorrect.
+ * 2004/01/09[h13] Added function to calculate lunar return.
+ * 2004/01/11[h14] Added solar return function, separated obliquity and nutation.
+ * 2004/01/11[h15] Pluto outside 1700-2100 now calculated using orbital elements.
+ * 2017/04/27[j01] Ported to JavaScript.
+ * 2017/05/25[j02] Replaced Pluto orbital elements with different logic.
+ * 2017/06/05[j03] Added support for 6-parameter orbital elements version.
+ * 2017/08/07[j04] Pluto calculation formula was incorrect. Also reverted j02.
+ * 2021/02/27[j05] Reviewed Pluto orbital element calculation formula.
+ * 2024/12/20[j06] Added osculating orbital element approximation for major asteroids and Chiron.
+ * 2025/02/15[j07] Aligned asteroid aberration correction with major planets.
+ * 2025/07/28[j08] Recalculated osculating orbital element Chebyshev approximation polynomials from JPL Horizons System results.
  */
 
-// 冥王星の1700～2100年以外の期間の軌道要素選択フラグ
+// Selection flag for Pluto orbital elements outside 1700-2100
 var jplMode = 1;
 
-// 天体位置を配列で返す統括関数
+// Main function that returns celestial positions as an array
 function calPlanetPosition( ye, mo, da, ho, mi, pid ){
 	var coor = new Array( 2 );
 	coor = findPlaceCoor( pid );
@@ -95,12 +95,12 @@ function calPlanetPosition2( ye, mo, da, ho, mi, lon, lat ){
 	return plapos;
 }
 
-// 各天体の黄経計算／JDは地球力学時基準
+// Calculate ecliptic longitude for each celestial body (JD is based on Terrestrial Dynamical Time)
 function calPlaPos( JD, pid ){
 	var T  = ( JD - 2451545.0 ) /  36525.0;
 	var T2 = ( JD - 2451545.0 ) / 365250.0;
 
-// 光行差定数
+// Aberration constants
 	var C = [0.00347, 0.00484, 0.00700, 0.01298, 0.01756, 0.02490, 0.03121, 0.03461];
 	var dl;
 	var epos = new Array(3);
@@ -108,11 +108,11 @@ function calPlaPos( JD, pid ){
 	var ppos = new Array(3);
 
 	epos = calPositSO( T2 );
-	if( pid == 1 ){ // 計算目標が太陽の場合
+	if( pid == 1 ){ // Calculation target is the Sun
 		gpos[ 0 ] = epos[ 0 ] - 0.005693 / epos[ 2 ];
-	} else if( pid == 2 ){ // 計算目標が月の場合
+	} else if( pid == 2 ){ // Calculation target is the Moon
 		gpos = calPositMO(T);
-	} else if ( pid <= 10 ) { // 計算目標が大惑星の場合
+	} else if ( pid <= 10 ) { // Calculation target is a major planet
 		switch( pid ){
 			case 3:
 				ppos = calPositME( T2 );
@@ -141,34 +141,34 @@ function calPlaPos( JD, pid ){
 				} else { // Pluto_obspm valids thru -3000 - 3000, but intentionally uses to 0 - 4000
 					ppos = calPositPL_obspm( T );
 				}
-				ppos[ 0 ] += 5029.0966 / 3600.0 * T;  // 線型近似の歳差補正する
+				ppos[ 0 ] += 5029.0966 / 3600.0 * T;  // Apply linear approximation precession correction
 				break;
 		}
 		gpos = convertGeocentric( epos, ppos );
 		dl  = -0.005693  * Math.cos( ( gpos[ 0 ] - epos[ 0 ] ) * Math.PI / 180.0 );
 		dl -= C[ pid - 3 ] * Math.cos( ( gpos[ 0 ] - ppos[ 0 ] ) * Math.PI / 180.0 ) / ppos[ 2 ];
 		gpos[ 0 ] += dl;
-	} else { // 計算目標が小惑星かキローンの場合
+	} else { // Calculation target is a minor planet or Chiron
 		const mid = pid - 11;
 		ppos = calAsteroidPosition(JD, mid);
 		const meanA = [2.766051, 2.770193, 2.670669, 2.361397, 13.698943];
 		const a = meanA[mid];
 		const Cp = 0.00558236 * Math.sqrt(a) + 0.00016798;
 		if (ppos) {
-			ppos[0] += 5029.0966 / 3600.0 * T;  // 線型近似の歳差補正する
+			ppos[0] += 5029.0966 / 3600.0 * T;  // Apply linear approximation precession correction
 			gpos = convertGeocentric( epos, ppos );
 			dl  = -0.005693  * Math.cos( ( gpos[ 0 ] - epos[ 0 ] ) * Math.PI / 180.0 );
 			dl -= Cp * Math.cos( ( gpos[ 0 ] - ppos[ 0 ] ) * Math.PI / 180.0 ) / ppos[ 2 ];
 			gpos[ 0 ] += dl;
 		} else {
-			gpos[0] = -361.0; // 計算期間外
+			gpos[0] = -361.0; // Outside calculation period
 		}
 	}
 
 	return gpos[ 0 ];
 }
 
-// 各要素の計算
+// Calculation for each element
 function calVsopTerm( T, term ){
 	var res = 0.0;
 
@@ -882,7 +882,7 @@ function calPositPL_obspm( T ) {
 	return orbitWork( ...orbitalElements );
 }
 
-// 太陽と月の速度
+// Solar and lunar velocity
 function calSolarVelocity( JD ){
 	var T = ( JD - 2451545.0 ) / 365250.0;
 	var vel  = 3548.330;
@@ -946,7 +946,7 @@ function calLunarVelocity( JD ){
 	return vel;
 }
 
-// ノード、リリス
+// Node and Lilith
 // This function from "Numerical expressions for precession formulae
 // and mean elements for the Moon and the planets" J. L. Simon, et al.,
 // Astron. Astrophys., 282, 663-683(1994).
@@ -963,7 +963,7 @@ function calPositLuna( JD ){
 	l   = mod360(134.9634114 + 13.06499295 * d + 0.0089970278 * T * T);
 	l1  = mod360(357.5291092 +  0.98560028 * d - 0.0001536667 * T * T);
 
-// ノード補正
+// Node correction
 	DH  = omg;
 	DH -= 1.4978 * sin4deg(2.0 * (D - F));
 	DH -= 0.1500 * sin4deg(l1);
@@ -972,7 +972,7 @@ function calPositLuna( JD ){
 	DH -= 0.0800 * sin4deg(2.0 * (l - F));
 	DH  = mod360(DH);
 
-// リリス補正
+// Lilith correction
 	LT  = opi + 180.0;
 	LT -= 15.4469 * sin4deg(2.0 * D - l);
 	LT -=  9.6419 * sin4deg(2.0 * (D - l));
@@ -995,9 +995,9 @@ function calPositLuna( JD ){
 	return luna;
 }
 
-// ASC・MC計算
+// ASC and MC calculation
 function calGeoPoint( lst, la, obl ){
-	// MC計算
+	// MC calculation
 	var MCx = sin4deg(lst);
 	var MCy = cos4deg(lst) * cos4deg(obl);
 	var MC  = mod360( Math.atan2( MCx, MCy ) / deg2rad );
@@ -1005,7 +1005,7 @@ function calGeoPoint( lst, la, obl ){
 		MC += 360.0;
 	}
 
-	// ASC計算
+	// ASC calculation
 	var ASCx  = cos4deg(lst);
 	var ASCy  = -(sin4deg(obl) * tan4deg(la));
 	    ASCy -= cos4deg(obl) * sin4deg(lst);
@@ -1020,10 +1020,10 @@ function calGeoPoint( lst, la, obl ){
 
 /* ========== */
 
-// 小惑星位置計算（ mid: 0 - 4 ）
+// Minor planet position calculation (mid: 0 - 4)
 function calAsteroidPosition( JD, mid ){
-	// 接触軌道要素 Chebyshev 近似多項式
-	// セレス・パラス・ジュノー・ベスタ・キローンの順
+	// Osculating orbital element Chebyshev approximation polynomials
+	// Order: Ceres, Pallas, Juno, Vesta, Chiron
 	const table_a = [
 		[ 2.76711779e+00,  2.15588896e-04,  4.18512586e-05,  2.26138300e-04,  3.86165691e-05,  1.91170823e-04, -8.39240862e-06,  3.35452977e-05, -1.10608695e-04,  1.78833020e-04, -1.11806922e-04],
 		[ 2.77119808e+00, -1.71285605e-04,  2.00062860e-04, -4.63357591e-04,  3.14209339e-04, -4.67291723e-04,  5.23136581e-04,  1.22366585e-03,  1.14800009e-04,  1.00782980e-05,  9.21893412e-05],
@@ -1067,10 +1067,10 @@ function calAsteroidPosition( JD, mid ){
 		[-5.27699356e-02, -3.71957289e-04, -4.77751902e-05, -8.98537573e-05, -1.68400061e-05,  2.27906342e-05,  5.55114272e-06,  2.57456091e-05, -3.02298236e-05,  7.84796059e-06, -3.18100566e-05]
 	];
 
-	// 軌道要素から日心位置を算出
+	// Calculate heliocentric position from orbital elements
 	const x = ( JD - 2460675.0 ) / 36525.0 ;
 	if ( Math.abs(x) > 1.0 ) {
-		return null; // 計算対象範囲外
+		return null; // Outside calculation target range
 	}
 
 	const r_a = table_a[ mid ];
@@ -1091,8 +1091,8 @@ function calAsteroidPosition( JD, mid ){
 	return orbitWork( ...orbitalElements );
 }
 
-/* ---- 当面はソーラーリターン、ルナーリターンは使わない。使う時に復活させる
-///// Return 計算関数
+/* ---- Currently not using solar return, lunar return. Will reactivate when needed.
+///// Return calculation functions
 // Solar Return
 function calAfterSolarReturn{
 	my($nSu, $date0) = @_;
