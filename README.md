@@ -87,6 +87,57 @@ REST endpoint: `GET /api/zodiac?year&month&day&hour&minute&lon&lat` returns plan
 
 Astrology stays astrology here: the same signs, the same sky, the same Earth-bound point of view — only the ruler is the real solstice instead of the civil calendar.
 
+## REST API (server.js and Cloudflare Worker)
+
+Run locally with `timeout 8 node server.js` (port 3000). The Cloudflare Worker is deployed as `js-astro-api`.
+
+### Endpoints
+
+| Endpoint | Description |
+|---|---|
+| `GET /api/planets` | Planetary positions and points |
+| `GET /api/houses` | House cusps (`system=1-7`) |
+| `GET /api/chart` | Planets + houses in one call |
+| `GET /api/zodiac` | 364-part zodiac + `zodiacTime` (Ultracopernican) |
+| `GET /api/places` | Search a place by name (disambiguates homonyms) |
+
+### Parameters
+
+- `year`, `month`, `day`, `hour`, `minute` — the local civil time of the birthplace calendar date.
+- Location, either:
+  - `lon` + `lat` in **decimal degrees** (`11`, `45.19`) **or degrees-minutes-seconds** (`11°00'00"E`, `45°15'30"N`, `45 15 30`, `45:15:30`), with optional hemisphere letters `N/S/E/W` and signs; or
+  - `city` (name) + optional `country` (ISO-3166 alpha-2, e.g. `IT`) — the API resolves coordinates and IANA time zone automatically from the GeoNames index.
+- Optional `tz` — IANA (OLSON) zone (e.g. `Europe/Rome`, `Asia/Tokyo`). When present, `hour/minute` are treated as local civil time and converted to UTC automatically (historical DST included). Without `tz` the entered time is treated as UTC already.
+- Optional `system` — house system 1-7: Placidus, Campanus, Regiomontanus, Koch, Topocentric, Axial, Morinus.
+
+### Place search (homonym disambiguation)
+
+`GET /api/places?q=roma&country=IT` returns candidate matches ranked by name score then population,
+each with `name`, `country`, `latitude`, `longitude`, `timeZone`, `population` — pick the right one and
+pass it back as `city=...&country=...` (example: `san jose` exists in US, CR and PH).
+
+### Test cases
+
+```
+# Reference chart (Isola della Scala, 08/06/1960, 20:20 local):
+#   local time + tz          -> UTC 19:20
+GET /api/chart?year=1960&month=6&day=8&hour=20&minute=20&city=Isola+della+Scala&country=IT
+# equivalently with coordinates and tz
+GET /api/chart?year=1960&month=6&day=8&hour=20&minute=20&lon=11&lat=45.19&tz=Europe/Rome
+# coordinates as DMS
+GET /api/chart?year=1960&month=6&day=8&hour=20&minute=20&lon=11%C2%B000%2700%22E&lat=45%C2%B015%2730%22N&tz=Europe/Rome
+# the same instant from Asia/Tokyo (local: 1960-06-09 04:20)
+GET /api/chart?year=1960&month=6&day=9&hour=4&minute=20&lon=139.69&lat=35.69&tz=Asia/Tokyo
+```
+
+Expected for the reference chart: Sun Gemini 17°58'13" (ASC Sagittarius 23°08'14", Moon Sagittarius 7°27'02");
+364-coordinate Sun = Cancer 1(+28) 50'12", zodiac time `Cancer 00 14:58:23`.
+
+Place data: derived from [GeoNames](https://www.geonames.org/) (`cities15000` + `IT` exports), licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Regenerate with `node build-places.js`.
+Coordinates internal to the engine are expressed in **degrees-minutes-seconds systems interchangeably**:
+the API accepts both DMS (`45°15'30"N`) and pure degree fractions (`45.2583`).
+
 ## Demonstration
 To test this library, try [this](http://astsakai.halfmoon.jp/fortune/platest_js.html).
 

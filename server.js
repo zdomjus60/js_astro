@@ -28,27 +28,42 @@ app.get('/', (req, res) => {
 
     <div class="endpoint">
         <strong>GET /api/planets</strong> - Planetary positions<br>
-        <a href="/api/planets?year=1960&month=6&day=8&hour=19&minute=20&lon=11&lat=45.19">Test with a real chart</a>
+        <a href="/api/planets?year=1960&month=6&day=8&hour=20&minute=20&lon=11&lat=45.19&tz=Europe/Rome">Test with a real chart (local time + tz)</a>
     </div>
 
     <div class="endpoint">
         <strong>GET /api/houses</strong> - House cusps (add <code>system=1-7</code>)<br>
-        <a href="/api/houses?year=1960&month=6&day=8&hour=19&minute=20&lon=11&lat=45.19&system=1">Test Placidus</a>
+        <a href="/api/houses?year=1960&month=6&day=8&hour=20&minute=20&lon=11&lat=45.19&tz=Europe/Rome&system=1">Test Placidus (local time + tz)</a>
     </div>
 
     <div class="endpoint">
         <strong>GET /api/chart</strong> - Full chart (planets + points + houses)<br>
-        <a href="/api/chart?year=1960&month=6&day=8&hour=19&minute=20&lon=11&lat=45.19">Test full chart</a>
+        <a href="/api/chart?year=1960&month=6&day=8&hour=20&minute=20&lon=11&lat=45.19&tz=Europe/Rome">Test full chart (local time + tz)</a>
     </div>
 
     <div class="endpoint">
         <strong>GET /api/zodiac</strong> - 364-part zodiac + zodiac time (Ultracopernican)<br>
-        <a href="/api/zodiac?year=1960&month=6&day=8&hour=19&minute=20&lon=11&lat=45.19">Test ultracopernican chart</a>
+        <a href="/api/zodiac?year=1960&month=6&day=8&hour=20&minute=20&lon=11&lat=45.19&tz=Europe/Rome">Test ultracopernican chart (local time + tz)</a>
+    </div>
+
+    <div class="endpoint">
+        <strong>GET /api/places</strong> - search a place by name (same name in several countries &rarr; pick the right one)<br>
+        <a href="/api/places?q=roma">search roma</a> &nbsp; <a href="/api/places?q=san%20jose">search san jose</a>
     </div>
 
     <h2>Parameters</h2>
-    <code>year</code>, <code>month</code>, <code>day</code>, <code>hour</code>, <code>minute</code>, <code>lon</code>, <code>lat</code><br>
-    Optional: <code>system</code> (1=Placidus, 2=Campanus, 3=Regiomontanus, 4=Koch, 5=Topocentric, 6=Axial, 7=Morinus)
+    <code>year</code>, <code>month</code>, <code>day</code>, <code>hour</code>, <code>minute</code> (local civil time of the birthplace).<br>
+    Location: <code>lon</code> + <code>lat</code> as decimal degrees (<code>45.19</code>) or degrees-minutes-seconds
+    (<code>45&deg;15'30"N</code>) &mdash; <strong>or</strong> <code>city</code>=name with optional <code>country</code>=ISO 3166 code;
+    the API resolves coordinates and time zone automatically.<br>
+    Optional: <code>system</code> (1=Placidus, 2=Campanus, 3=Regiomontanus, 4=Koch, 5=Topocentric, 6=Axial, 7=Morinus)<br>
+    Optional: <code>tz</code> - IANA (OLSON) time zone name (e.g. <code>Europe/Rome</code>, <code>Asia/Tokyo</code>).<br>
+    The time entered is the <strong>local civil time of the birthplace</strong>; with <code>tz</code> the API converts it to UTC automatically (historical DST included). Without <code>tz</code>, the entered time is treated as UTC.<br>
+    See the <a href="https://www.iana.org/time-zones">IANA Time Zone Database</a> for zone names.
+
+    <h2>Place search</h2>
+    <code>GET /api/places?q=roma&amp;country=IT&amp;limit=10</code> - returns candidate matches with
+    coordinates, IANA time zone and population, so you can disambiguate homonyms across countries.
 
     <h2>House systems</h2>
     <table>
@@ -65,6 +80,16 @@ app.get('/', (req, res) => {
 });
 app.use(express.static('public'));
 
+// GET /api/places?q=name&country=CC&limit=N - search a place (disambiguate homonyms)
+app.get('/api/places', (req, res) => {
+    const q = String(req.query.q || '').trim();
+    const cc = req.query.country || null;
+    const lim = parseInt(req.query.limit || '10', 10);
+    if (!q) return res.status(400).json({ error: 'Missing parameter: q', hint: '/api/places?q=roma&country=IT' });
+    const results = searchPlaces(q, cc, isNaN(lim) ? 10 : lim);
+    res.json({ query: q, country: cc || '', count: results.length, results });
+});
+
 // Load astro library
 const files = [
     'src/math.js',
@@ -74,16 +99,20 @@ const files = [
     'src/hekichan.js',
     'src/metako.js',
     'src/cuspcal.js',
-    'src/zodiac.js'
+    'src/zodiac.js',
+    'src/tz.js',
+    'src/coord.js',
+    'src/places.js'
 ];
 
-const sandbox = { Math, console, Array, Number, String, parseInt, parseFloat, isNaN, Date };
+const sandbox = { Math, console, Array, Number, String, parseInt, parseFloat, isNaN, Date, Intl };
 vm.createContext(sandbox);
 for (const f of files) {
     vm.runInContext(fs.readFileSync(f, 'utf-8'), sandbox, { filename: f });
 }
 
-const { calPlanetPosition2, calHouseCusp2, describeZodiac364, jdToZodiacTime } = sandbox;
+const { calPlanetPosition2, calHouseCusp2, describeZodiac364, jdToZodiacTime,
+        isValidIANAZone, localCivilToUtc, parseCoord, findPlace, searchPlaces } = sandbox;
 
 // Helper: convert longitude to zodiac
 function toZodiac(lon) {
@@ -107,27 +136,81 @@ function toZodiac(lon) {
     };
 }
 
+// Resolve and validate query params; converts local civil time to UTC when tz is given
+function resolveParams(q) {
+    const { year, month, day, hour, minute, lon, lat, tz, system, city, country } = q;
+    if (!year || !month || !day || !hour || !minute) {
+        return { error: { error: 'Missing parameters', required: ['year','month','day','hour','minute'] } };
+    }
+    const pad2 = (v) => String(v).padStart(2, '0');
+    let y = parseInt(year), m = parseInt(month), d = parseInt(day);
+    let h = parseInt(hour), mi = parseInt(minute);
+    const htype = parseInt(system) || 1;
+
+    // Location: lon+lat (decimal degrees or degrees-minutes-seconds) or
+    // city=<name> with optional country=<ISO-3166 alpha-2>.
+    const hasLon = typeof lon === 'string' && lon.trim() !== '';
+    const hasLat = typeof lat === 'string' && lat.trim() !== '';
+    const hasCity = typeof city === 'string' && city.trim() !== '';
+    let lo = NaN, la = NaN;
+    let effTz = (typeof tz === 'string' && tz !== '') ? tz : null;
+
+    const base = { date: `${y}-${pad2(m)}-${pad2(d)}`,
+                   time: `${pad2(h)}:${pad2(mi)}` };
+
+    if (hasLon || hasLat) {
+        if (hasLon !== hasLat) {
+            return { error: { error: 'Provide both lon and lat together' } };
+        }
+        lo = parseCoord(lon);
+        la = parseCoord(lat);
+        if (isNaN(lo) || isNaN(la)) {
+            return { error: { error: 'Invalid lon/lat. Use decimal degrees (e.g. 45.19) or degrees-minutes-seconds (e.g. 45°15\'30"N)' } };
+        }
+    } else if (hasCity) {
+        const pl = findPlace(city.trim(), country);
+        if (!pl) {
+            return { error: { error: 'Unknown place: ' + city + (country ? ' (' + country + ')' : ''),
+                              hint: 'Use /api/places?q=... to search the exact location and its country code' } };
+        }
+        lo = pl[4]; la = pl[3];
+        base.resolved = { name: pl[0], country: pl[2], population: pl[6] };
+        if (!effTz) effTz = pl[5];
+    } else {
+        return { error: { error: 'Missing location', required: ['lon','lat'] + ' or ' + ['city'], hint: 'lon/lat accept decimal degrees or degrees-minutes-seconds' } };
+    }
+    base.location = { longitude: lo, latitude: la };
+
+    if (effTz) {
+        if (!isValidIANAZone(effTz)) {
+            return { error: { error: 'Unknown IANA time zone: ' + effTz,
+                              hint: 'Zone names come from the IANA (OLSON) database: https://www.iana.org/time-zones' } };
+        }
+        const conv = localCivilToUtc(y, m, d, h, mi, effTz);
+        base.timeZone = effTz;
+        base.localDate = base.date;
+        base.localTime = base.time;
+        base.utcDate = `${conv.year}-${pad2(conv.month)}-${pad2(conv.day)}`;
+        base.utcTime = `${pad2(conv.hour)}:${pad2(conv.minute)}`;
+        base.utcOffsetMinutes = conv.offsetMinutes;
+        y = conv.year; m = conv.month; d = conv.day;
+        h = conv.hour; mi = conv.minute;
+    } else {
+        base.utcDate = base.date;
+        base.utcTime = base.time;
+    }
+    return { y, m, d, h, mi, lo, la, htype, base };
+}
+
 // GET /api/planets?year=1960&month=6&day=8&hour=19&minute=20&lon=11&lat=45.19
 app.get('/api/planets', (req, res) => {
-    const { year, month, day, hour, minute, lon, lat } = req.query;
-
-    if (!year || !month || !day || !hour || !minute || !lon || !lat) {
-        return res.status(400).json({
-            error: 'Missing parameters',
-            required: ['year','month','day','hour','minute','lon','lat']
-        });
-    }
-
-    const y = parseInt(year), m = parseInt(month), d = parseInt(day);
-    const h = parseInt(hour), mi = parseInt(minute);
-    const lo = parseFloat(lon), la = parseFloat(lat);
+    const r = resolveParams(req.query);
+    if (r.error) return res.status(400).json(r.error);
+    const { y, m, d, h, mi, lo, la, base } = r;
 
     const p = calPlanetPosition2(y, m, d, h, mi, lo, la);
 
-    res.json({
-        date: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`,
-        time: `${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`,
-        location: { longitude: lo, latitude: la },
+    res.json(Object.assign(base, {
         julianDay: parseFloat(p[0].toFixed(6)),
         planets: {
             sun:     toZodiac(p[1]),
@@ -154,23 +237,14 @@ app.get('/api/planets', (req, res) => {
             vesta:  toZodiac(p[18]),
             chiron: toZodiac(p[19])
         }
-    });
+    }));
 });
 
 // GET /api/zodiac - 364-part zodiac (revolution ultracopernicana)
 app.get('/api/zodiac', (req, res) => {
-    const { year, month, day, hour, minute, lon, lat } = req.query;
-
-    if (!year || !month || !day || !hour || !minute || !lon || !lat) {
-        return res.status(400).json({
-            error: 'Missing parameters',
-            required: ['year','month','day','hour','minute','lon','lat']
-        });
-    }
-
-    const y = parseInt(year), m = parseInt(month), d = parseInt(day);
-    const h = parseInt(hour), mi = parseInt(minute);
-    const lo = parseFloat(lon), la = parseFloat(lat);
+    const r = resolveParams(req.query);
+    if (r.error) return res.status(400).json(r.error);
+    const { y, m, d, h, mi, lo, la, base } = r;
 
     const p = calPlanetPosition2(y, m, d, h, mi, lo, la);
     const t = jdToZodiacTime(p[0]);
@@ -194,34 +268,21 @@ app.get('/api/zodiac', (req, res) => {
         chiron: describeZodiac364(p[19])
     };
 
-    res.json({
-        date: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`,
-        time: `${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`,
-        location: { longitude: lo, latitude: la },
+    res.json(Object.assign(base, {
         julianDay: parseFloat(p[0].toFixed(6)),
         description: 'Credible alternative to the 12-sign zodiac: 364 parts = 13 signs x 28, origin = real winter solstice',
         planets,
         points,
         minorPlanets,
         zodiacTime: t
-    });
+    }));
 });
 
 // GET /api/houses?year=...&month=...&day=...&hour=...&minute=...&lon=...&lat=...&system=1
 app.get('/api/houses', (req, res) => {
-    const { year, month, day, hour, minute, lon, lat, system } = req.query;
-    const htype = parseInt(system) || 1;
-
-    if (!year || !month || !day || !hour || !minute || !lon || !lat) {
-        return res.status(400).json({
-            error: 'Missing parameters',
-            required: ['year','month','day','hour','minute','lon','lat']
-        });
-    }
-
-    const y = parseInt(year), m = parseInt(month), d = parseInt(day);
-    const h = parseInt(hour), mi = parseInt(minute);
-    const lo = parseFloat(lon), la = parseFloat(lat);
+    const r = resolveParams(req.query);
+    if (r.error) return res.status(400).json(r.error);
+    const { y, m, d, h, mi, lo, la, htype, base } = r;
 
     const c = calHouseCusp2(y, m, d, h, mi, lo, la, htype);
 
@@ -235,30 +296,17 @@ app.get('/api/houses', (req, res) => {
         houses[`house${i}`] = toZodiac(c[i]);
     }
 
-    res.json({
-        date: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`,
-        time: `${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`,
-        location: { longitude: lo, latitude: la },
+    res.json(Object.assign(base, {
         system: { id: htype, name: systemNames[htype] || 'Unknown' },
         houses
-    });
+    }));
 });
 
 // GET /api/chart - everything in one call
 app.get('/api/chart', (req, res) => {
-    const { year, month, day, hour, minute, lon, lat, system } = req.query;
-    const htype = parseInt(system) || 1;
-
-    if (!year || !month || !day || !hour || !minute || !lon || !lat) {
-        return res.status(400).json({
-            error: 'Missing parameters',
-            required: ['year','month','day','hour','minute','lon','lat']
-        });
-    }
-
-    const y = parseInt(year), m = parseInt(month), d = parseInt(day);
-    const h = parseInt(hour), mi = parseInt(minute);
-    const lo = parseFloat(lon), la = parseFloat(lat);
+    const r = resolveParams(req.query);
+    if (r.error) return res.status(400).json(r.error);
+    const { y, m, d, h, mi, lo, la, htype, base } = r;
 
     const p = calPlanetPosition2(y, m, d, h, mi, lo, la);
     const c = calHouseCusp2(y, m, d, h, mi, lo, la, htype);
@@ -273,10 +321,7 @@ app.get('/api/chart', (req, res) => {
         houses[`house${i}`] = toZodiac(c[i]);
     }
 
-    res.json({
-        date: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`,
-        time: `${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`,
-        location: { longitude: lo, latitude: la },
+    res.json(Object.assign(base, {
         julianDay: parseFloat(p[0].toFixed(6)),
         planets: {
             sun:     toZodiac(p[1]),
@@ -305,7 +350,7 @@ app.get('/api/chart', (req, res) => {
         },
         houseSystem: { id: htype, name: systemNames[htype] || 'Unknown' },
         houses
-    });
+    }));
 });
 
 const PORT = process.env.PORT || 3000;
@@ -317,7 +362,11 @@ app.listen(PORT, () => {
     console.log('  GET /api/houses   - House cusps');
     console.log('  GET /api/chart    - Full chart (planets + houses)');
     console.log('  GET /api/zodiac   - 364-part zodiac + zodiac time');
+    console.log('  GET /api/places   - search a place by name (homonym disambiguation)');
     console.log('');
-    console.log('Parameters: year, month, day, hour, minute, lon, lat');
+    console.log('Parameters: year, month, day, hour, minute');
+    console.log('Location: lon+lat (decimal degrees or DMS) OR city=<name> (+country=<ISO code>)');
     console.log('Optional: system (1-7) for house system');
+    console.log('Optional: tz (IANA/OLSON zone, e.g. Europe/Rome) - converts local time to UTC');
+    console.log('IANA Time Zone Database: https://www.iana.org/time-zones');
 });
