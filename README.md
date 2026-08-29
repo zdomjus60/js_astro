@@ -151,7 +151,9 @@ the API accepts both DMS (`45°15'30"N`) and pure degree fractions (`45.2583`).
 
 ## Demonstration
 
-To test the original library, try [this](http://astsakai.halfmoon.jp/fortune/platest_js.html) (Japanese).
+Credit for the original library: the author's demo page is
+[this](http://astsakai.halfmoon.jp/fortune/platest_js.html) (Japanese) — kept
+for the original tool and its Japanese-speaking users.
 
 In the spirit of this fork — the **Ultracopernican revolution**, where the sky
 stays whole and the calendar adapts — the demonstration we propose is the live
