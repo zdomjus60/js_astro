@@ -1,15 +1,19 @@
 #!/usr/bin/env node
-// build-places.js - generates src/places.js from the GeoNames cities15000 export
+// build-places.js - generates src/places.js from the GeoNames cities1000 export
 //
 // Source data: GeoNames (CC BY 4.0) https://www.geonames.org/
-// Export:     https://download.geonames.org/export/dump/cities15000.zip
+// Export:     https://download.geonames.org/export/dump/cities1000.zip
 //
-// The generated index keeps all world cities with population >= 100000
-// (compact enough to ship inside the Cloudflare Worker and cover every
-// capital and major world city) PLUS Italian populated places with
-// population >= IT_MIN_POPULATION, so the whole of Italy is testable down
-// to midsize comuni. Fields per city: name, asciiname, country, lat, lon,
-// IANA time zone, population.
+// The generated index keeps all world cities with population >= MIN_POPULATION
+// PLUS Italian populated places with population >= IT_MIN_POPULATION, so the
+// whole of Italy is testable down to midsize comuni. Fields per city: name,
+// asciiname, country, lat, lon, IANA time zone, population.
+//
+// The Cloudflare Workers Free plan caps the deployed script at 3 MB after
+// gzip, and the rest of the bundle (astronomy + homes + routing) is about
+// 0.34 MB gzipped. So the world-city threshold must keep the city table
+// comfortably below ~2.6 MB gzipped. pop>=5000 (~69k cities, ~1.7 MB gzip)
+// is a good balance: roughly 5x the old 100k threshold while still fitting.
 //
 // Usage: node build-places.js [world_file] [it_file]
 // If a path is omitted and the file is not present next to the script, it is
@@ -17,7 +21,7 @@
 const fs = require('fs');
 const http = require('http');
 
-const MIN_POPULATION = 100000;
+const MIN_POPULATION = 5000;
 const IT_MIN_POPULATION = 1500;
 const OUT = 'src/places.js';
 
@@ -67,12 +71,18 @@ function loadCities(path, minPop) {
     return cities;
 }
 
-// Compact alternate-name aliases for the big, famous cities only
-// (population >= 500k), taken from the GeoNames alternatenames column.
+// Alternate-name aliases for every city in the index (population >=
+// MIN_POPULATION), taken from the GeoNames alternatenames column.
 // Both ASCII transliterations and the original Unicode scripts are kept
 // (e.g. Roma, 東京, Москва, ローマ), so lookups work in many languages.
-const ALIAS_MIN_POP = 500000;
-const ALIAS_PER_CITY = 8;
+// The Cloudflare script limit (3 MB gzip) leaves room for roughly 850-900 KiB
+// of aliases on top of the city table, so the per-city cap is graduated:
+// up to ALIAS_CAP_BIG_N names for cities >= ALIAS_CAP_BIG population (the
+// famous ones carry many variants) and ALIAS_CAP_SMALL_N for everyone else
+// (small towns rarely have more than a handful of alternatenames anyway).
+const ALIAS_CAP_BIG = 500000;
+const ALIAS_CAP_BIG_N = 8;
+const ALIAS_CAP_SMALL_N = 4;
 // a name must contain at least one Unicode letter
 const ALIAS_HAS_LETTER = /\p{L}/u;
 
@@ -81,10 +91,10 @@ function buildAliases(cities) {
     const seen = new Set();
     for (let idx = 0; idx < cities.length; idx++) {
         const c = cities[idx];
-        if (c[6] < ALIAS_MIN_POP) continue;
+        const cap = c[6] >= ALIAS_CAP_BIG ? ALIAS_CAP_BIG_N : ALIAS_CAP_SMALL_N;
         let n = 0;
         for (const a of String(c[7] || '').split(',')) {
-            if (n >= ALIAS_PER_CITY) break;
+            if (n >= cap) break;
             const t = a.trim();
             // keep only short, single-token local names (e.g. Roma, Milano,
             // 東京, Москва, ローマ); skip long descriptive transliterations
@@ -271,8 +281,8 @@ function addCurated(unique, aliases, seen) {
 (async () => {
     const [worldArg, itArg] = process.argv.slice(2);
     const worldSrc = await getSource(
-        'http://download.geonames.org/export/dump/cities15000.zip',
-        'cities15000.zip', 'cities15000.txt', worldArg);
+        'http://download.geonames.org/export/dump/cities1000.zip',
+        'cities1000.zip', 'cities1000.txt', worldArg);
     const itSrc = await getSource(
         'http://download.geonames.org/export/dump/IT.zip',
         'IT.zip', 'IT.txt', itArg);
@@ -304,7 +314,7 @@ function addCurated(unique, aliases, seen) {
         'var GEO_CITIES = [\n' +
         rows.join(',\n') +
         '\n];\n\n' +
-        '// City aliases (alternate names in various scripts, for big cities)\n' +
+        '// City aliases (alternate names in various scripts, for every city)\n' +
         '// [aliasLower, indexIntoGEO_CITIES]\n' +
         'var GEO_ALIASES = [\n' +
         aliasRows.join(',\n') +

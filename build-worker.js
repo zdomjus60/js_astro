@@ -16,7 +16,11 @@ const srcFiles = [
     'src/places.js'
 ];
 
+const appPage = fs.readFileSync('public/app.html', 'utf-8');
+
 const handler = `
+const APP_PAGE = ${JSON.stringify(appPage)};
+
 const ZODIAC = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const ZODIAC_ABBR = ['Ar','Ta','Ge','Cn','Le','Vi','Li','Sc','Sg','Ca','Aq','Pi'];
 const HOUSE_NAMES = {1:'Placidus',2:'Campanus',3:'Regiomontanus',4:'Koch',5:'Topocentric',6:'Axial',7:'Morinus'};
@@ -142,11 +146,16 @@ const homePage = \`<!DOCTYPE html>
 <style>
 body{font-family:monospace;margin:30px;background:#1a1a2e;color:#e0e0e0}
 h1{color:#00d4ff}a{color:#ffd700}code{background:#16213e;padding:2px 6px;border-radius:3px}
+.cta{display:inline-block;margin:18px 0 4px;padding:16px 26px;background:#00d4ff;color:#0b1420;font-weight:bold;font-size:18px;text-decoration:none;border-radius:8px;border:2px solid #00e6ff;box-shadow:0 0 18px rgba(0,212,255,.35)}
+.cta:hover{background:#33ddff;box-shadow:0 0 26px rgba(0,212,255,.55)}
+.cta-sub{color:#9aa4b8;font-size:13px;margin:6px 0 10px}
 </style>
 </head>
 <body>
 <h1>js_astro API (Cloudflare Workers)</h1>
 <p>Astrological calculation - original by Yoshihiro Sakai, English translation fork.</p>
+<p><a class="cta" href="/app">&#128640; Open the online calculator</a></p>
+<p class="cta-sub">For everyone: pick a date and time, search your city - the chart and the Ultracopernican 364 zodiac are explained in readable text. No technical knowledge needed.</p>
 <h2>Endpoints</h2>
 <p><strong>GET /api/planets</strong> - <a href="/api/planets?year=1960&month=6&day=8&hour=20&minute=20&lon=11&lat=45.19&tz=Europe/Rome">test</a></p>
 <p><strong>GET /api/houses</strong> - <a href="/api/houses?year=1960&month=6&day=8&hour=20&minute=20&lon=11&lat=45.19&tz=Europe/Rome&system=1">test</a> (system 1-7)</p>
@@ -169,6 +178,9 @@ export default {
         }
         if (path === '/' || path === '/index.html') {
             return new Response(homePage, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+        }
+        if (path === '/app' || path === '/app.html') {
+            return new Response(APP_PAGE, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
         }
 
         if (path === '/api/places') {

@@ -1,6 +1,16 @@
 # js_astro
 Sample code for astrological calculation written by JavaScript.
 
+> **Try it online** — the calculator is live at
+> **https://js-astro-api.js-astro.workers.dev/app** (readable interface, no
+> technical knowledge needed: pick date/time, search your city, get the chart
+> and the [Ultracopernican 364 zodiac](https://github.com/anomalyco/js_astro) in plain text).
+> API documentation and endpoints: <https://js-astro-api.js-astro.workers.dev/>.
+>
+> **New — full usage guide:** see **[GUIDE.md](GUIDE.md)** for a step-by-step
+> walkthrough of the web calculator and ready-to-run API examples in Python,
+> JavaScript and curl.
+
 This library intent to:
 
 * calculation of major planetary position(geocentric, apparent longitude) for 0-4000 A.D. within 1 arcminute.
@@ -133,7 +143,8 @@ GET /api/chart?year=1960&month=6&day=9&hour=4&minute=20&lon=139.69&lat=35.69&tz=
 Expected for the reference chart: Sun Gemini 17°58'13" (ASC Sagittarius 23°08'14", Moon Sagittarius 7°27'02");
 364-coordinate Sun = Cancer 1(+28) 50'12", zodiac time `Cancer 00 14:58:23`.
 
-Place data: derived from [GeoNames](https://www.geonames.org/) (`cities15000` + `IT` exports), licensed under
+Place data: derived from [GeoNames](https://www.geonames.org/) (`cities1000` + `IT` exports, filtered to
+world population ≥ 5000 plus Italian places ≥ 1500 ≈ 72k cities), licensed under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Regenerate with `node build-places.js`.
 Coordinates internal to the engine are expressed in **degrees-minutes-seconds systems interchangeably**:
 the API accepts both DMS (`45°15'30"N`) and pure degree fractions (`45.2583`).

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Astrology Calculator - js_astro</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;margin:0;background:#101623;color:#e6ebf2;line-height:1.5}
+header{max-width:860px;margin:0 auto;padding:28px 20px 8px}
+h1{font-size:26px;margin:0 0 4px;color:#6fe7ff}
+.sub{color:#9fb0c3;margin:0 0 18px}
+.card{background:#182233;border:1px solid #26344d;border-radius:10px;padding:18px 20px;max-width:860px;margin:0 auto 16px}
+.card h2{font-size:15px;color:#ffd966;margin:18px 0 8px;text-transform:uppercase;letter-spacing:.06em}
+.card h2:first-child{margin-top:0}
+.hint{font-size:12.5px;color:#9fb0c3;margin:6px 0 0}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.field{min-width:110px;flex:1}
+.field label{display:block;font-size:12px;color:#9fb0c3;margin-bottom:4px}
+input,select{width:100%;padding:9px 10px;border:1px solid #33445f;border-radius:6px;background:#0f1622;color:#e6ebf2;font-size:14px}
+input:focus,select:focus{outline:none;border-color:#6fe7ff}
+button{padding:10px 16px;border:none;border-radius:6px;background:#223152;color:#dbe6f5;font-size:14px;cursor:pointer}
+button:hover{background:#2b3e66}
+button.primary{background:#157d9e;color:#eafcff;font-size:15px;font-weight:600}
+button.primary:hover{background:#1a93ba}
+button.small{padding:6px 10px;font-size:12.5px;background:#1d2c46;color:#bcd0e8}
+button.small:hover{background:#28395a}
+#placeBlock{margin-top:4px}
+.searchline{display:flex;gap:8px;margin-bottom:6px}
+.searchline input{flex:1}
+#placeStatus{min-height:18px}
+.datalist-note{font-size:12px;color:#6f8f9c;margin-top:2px}
+.chip{display:inline-block;background:#0e2f3a;border:1px solid #1d5a70;color:#b7e9f4;border-radius:20px;padding:8px 14px;font-size:13.5px}
+.chip b{color:#eefcff}
+.chip .x{margin-left:10px;color:#ff9c9c;cursor:pointer;background:none;border:none;padding:0;font-size:15px}
+summary{cursor:pointer;color:#6fe7ff;font-size:13.5px;margin-bottom:6px}
+.manrow{flex-wrap:wrap;gap:8px;margin-top:8px}
+#houseRow{display:none}
+#houseRow.show{display:block}
+#errBox{max-width:860px;margin:0 auto 16px;background:#3a1420;border:1px solid #7a2a3d;color:#ffb7c2;border-radius:8px;padding:12px 16px;font-size:14px}
+#result h2{font-size:18px;color:#6fe7ff;margin:0 0 4px}
+.placeTitle{font-size:15px;color:#ffd966;margin-bottom:4px}
+.meta{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 16px}
+.meta div{background:#131e31;border:1px solid #26344d;border-radius:8px;padding:8px 12px;font-size:12.5px}
+.meta b{display:block;color:#9fb0c3;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+table{width:100%;border-collapse:collapse;margin:10px 0 4px;font-size:14px}
+th{text-align:left;color:#9fb0c3;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;padding:7px 10px;border-bottom:1px solid #2a3a57}
+td{padding:7px 10px;border-bottom:1px solid #1e2b42}
+tr:hover td{background:#172236}
+td.planet{font-weight:600}
+span.sign{color:#ffd966;font-weight:600}
+.coord{color:#8aa0bb;font-size:12.5px}
+.block h3{font-size:13px;color:#ffd966;text-transform:uppercase;letter-spacing:.05em;margin:18px 0 2px}
+h3.first{margin-top:2px}
+.zcard{background:#0e2f3a;border:1px solid #1d5a70;border-radius:10px;padding:16px 18px;margin:6px 0 4px}
+.zcard .big{font-size:24px;color:#b7e9f4;font-weight:700}
+.zcard .big span{color:#ffd966}
+.zcard .small{font-size:13px;color:#9fc9d4;margin-top:4px}
+.zcard .note{font-size:12px;color:#6f8f9c;margin-top:8px;border-top:1px dashed #1d5a70;padding-top:8px}
+.errline{color:#ff9c9c}
+.note{background:#10283c;border:1px solid #1d5a70;border-left:4px solid #6fe7ff;border-radius:8px;padding:12px 16px;margin:14px 0 6px;font-size:13.5px}
+.note h3{color:#6fe7ff;margin:0 0 8px;font-size:14px;text-transform:none;letter-spacing:0}
+.note p{margin:6px 0}
+.note ul{margin:6px 0;padding-left:22px}
+.note li{margin:4px 0}
+.note b{color:#ffd966}
+footer{max-width:860px;margin:0 auto;padding:20px;font-size:12px;color:#6b7e94}
+.links a{color:#6fe7ff;text-decoration:none}
+#goTop{display:block;max-width:860px;margin:0 auto;padding:0 20px 8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Astrology Calculator</h1>
+  <p class="sub">A readable interface to the js_astro engine: the classical 360° zodiac and the 364-part Ultracopernican alternative (13 signs × 28, starting at the real winter solstice).</p>
+</header>
+
+<div class="card">
+  <h2>Step 1 · Date and time</h2>
+  <div class="row">
+    <div class="field"><label for="year">Year</label><input id="year" type="number" placeholder="1960" min="0" max="3000"></div>
+    <div class="field"><label for="month">Month</label><input id="month" type="number" placeholder="6" min="1" max="12"></div>
+    <div class="field"><label for="day">Day</label><input id="day" type="number" placeholder="8" min="1" max="31"></div>
+    <div class="field"><label for="hour">Hour</label><input id="hour" type="number" placeholder="12" min="0" max="23"></div>
+    <div class="field"><label for="minute">Minute</label><input id="minute" type="number" placeholder="0" min="0" max="59"></div>
+  </div>
+  <p class="hint">This is the local clock time of the place. The service converts it to UTC automatically, including historical daylight saving rules.</p>
+
+  <h2>Step 2 · Place</h2>
+  <div id="placeBlock">
+    <div class="searchline">
+      <input id="placeInput" list="placeList" autocomplete="off" placeholder="Type a city - e.g. Mestre, London, Tokyo, New York">
+      <datalist id="placeList"></datalist>
+      <button id="searchBtn" class="small" type="button">Search</button>
+    </div>
+    <p id="placeStatus" class="hint" hidden></p>
+    <div id="placeChip" class="chip" hidden></div>
+    <div style="margin-top:8px">
+      <button id="example" class="small" type="button">Load example: 1 Jan 2010, 12:00, Mestre (Italy)</button>
+    </div>
+    <details id="manualBox" style="margin-top:10px">
+      <summary>…or enter coordinates manually</summary>
+      <div class="row manrow">
+        <div class="field"><label for="lon">Longitude (E=+, W=&minus; or DMS)</label><input id="lon" placeholder="12.2454"></div>
+        <div class="field"><label for="lat">Latitude (N=+, S=&minus; or DMS)</label><input id="lat" placeholder="45.4917"></div>
+        <div class="field"><label for="tz">Time zone (optional, IANA)</label><input id="tz" placeholder="Europe/Rome"></div>
+      </div>
+      <p class="hint">Decimal degrees (12.2454 / 45.4917) or degrees-minutes-seconds (45°15'30"N). Without a time zone the time above is treated as UTC.</p>
+    </details>
+  </div>
+
+  <h2>Step 3 · What to compute</h2>
+  <div class="row">
+    <div class="field"><label for="calcType">Calculation</label>
+      <select id="calcType">
+        <option value="chart">Full chart (planets, points, houses) - classical 360°</option>
+        <option value="zodiac">Ultracopernican 364 zodiac + zodiac time</option>
+        <option value="planets">Planet positions</option>
+        <option value="houses">Houses only</option>
+      </select>
+    </div>
+    <div class="field" id="houseSysWrap"><label for="houseSys">House system</label>
+      <select id="houseSys">
+        <option value="1">Placidus</option>
+        <option value="2">Campanus</option>
+        <option value="3">Regiomontanus</option>
+        <option value="4">Koch</option>
+        <option value="5">Topocentric</option>
+        <option value="6">Axial</option>
+        <option value="7">Morinus</option>
+      </select>
+    </div>
+  </div>
+  <div id="zodiacNote" class="note" hidden>
+    <h3>Why the 364 zodiac exists &middot; the Ultracopernican idea</h3>
+    <p>The classical zodiac was fixed about <b>two thousand years ago</b>. Since then the Earth's axis has slowly swung around (the <b>precession of the equinoxes</b>), so the twelve "signs" no longer match the constellations they were named after &mdash; and the sky is the only thing astrology can honestly hang on.</p>
+    <ul>
+      <li>The 364 zodiac makes the <b>real sky its origin</b>: the year begins at the actual winter solstice, when the Sun reaches 0&deg; Capricorn.</li>
+      <li>It divides the year into <b>13 signs &times; 28 days = 364 parts</b> &mdash; 28 echoes the Moon's cycle and keeps the numbers human and round.</li>
+      <li>It brings back <b>Ophiuchus, the 13th sign</b>: the band of the zodiac in the sky really does contain thirteen constellations.</li>
+      <li>One zodiacal day is exactly <b>1/364 of the tropical year</b> (&asymp; 1.0034 conventional days), so the year stays whole: <b>geometry rules, time adapts</b> &mdash; the clock bends, the sky never does.</li>
+      <li><b>Two honest meters</b>: the calendar counts uniform 1/364 days, but the Sun&rsquo;s position in the circle can run a fraction of a day ahead of or behind the clock (the <i>equation of time</i>). Real astronomy &mdash; the divergence is expected, not an error.</li>
+    </ul>
+    <p>It is a <b>credible alternative, not a replacement</b>: classical astrology keeps its symbolic tradition, this one chooses instead to follow the moving, real sky.</p>
+  </div>
+  <div style="margin-top:16px">
+    <button id="calcBtn" class="primary" type="button">Calculate</button>
+  </div>
+</div>
+
+<div id="errBox" hidden></div>
+
+<section id="result" class="card" hidden></section>
+
+<p id="goTop"><a href="#">Back to top</a></p>
+
+<footer>
+  Engine: js_astro by Yoshihiro Sakai (English fork), extended with the 364-part zodiac.
+  Place data: GeoNames, CC BY 4.0. Sources are computed on the server; coordinates and time-zone handling are automatic.
+</footer>
+
+<script>
+(function () {
+    'use strict';
+    var state = { place: null };
+    var placeMap = {};
+
+    var $ = function (id) { return document.getElementById(id); };
+    var year = $('year'), month = $('month'), day = $('day'),
+        hour = $('hour'), minute = $('minute');
+    var placeInput = $('placeInput'), searchBtn = $('searchBtn'),
+        placeList = $('placeList'), placeStatus = $('placeStatus'),
+        placeChip = $('placeChip'),
+        lon = $('lon'), lat = $('lat'), tz = $('tz'),
+        calcType = $('calcType'), houseSysWrap = $('houseSysWrap'),
+        houseSys = $('houseSys'), calcBtn = $('calcBtn'),
+        zodiacNote = $('zodiacNote'),
+        errBox = $('errBox'), result = $('result');
+
+    function explainerHTML() {
+        return '<div class="note"><h3>Why the 364 zodiac exists &middot; the Ultracopernican idea</h3>' +
+            '<p>Because of the <b>precession of the equinoxes</b>, the classical 12-sign zodiac &mdash; fixed about two thousand years ago &mdash; no longer matches the constellations it was named after. This alternative follows the real sky instead:</p>' +
+            '<ul>' +
+            '<li><b>Origin = the true sky</b>: the year starts at the actual winter solstice (Sun at 0&deg; Capricorn).</li>' +
+            '<li><b>13 signs &times; 28 days = 364 parts</b>: 28 echoes the Moon&rsquo;s cycle and keeps the numbers round.</li>' +
+            '<li><b>Ophiuchus is restored</b>, the 13th sign the tradition left out &mdash; the sky really does contain thirteen constellations.</li>' +
+            '<li><b>Geometry rules, time adapts</b>: one zodiacal day is exactly 1/364 of the tropical year (&asymp; 1.0034 conventional days), so the year stays whole and the calendar bends to the sky, never the sky to the calendar.</li>' +
+            '<li><b>Two honest meters</b>: the calendar counts uniform 1/364 days, while the Sun&rsquo;s position in the circle may run a fraction of a day ahead of or behind the clock (the <i>equation of time</i>). Real astronomy &mdash; that divergence is expected, not an error.</li>' +
+            '</ul>' +
+            '<p>A <b>credible alternative, not a replacement</b>: classical astrology keeps its symbolic tradition; this one chooses the moving, real sky.</p></div>';
+    }
+
+    function setNoteVisibility() {
+        zodiacNote.hidden = calcType.value !== 'zodiac';
+    }
+
+    var COUNTRIES = {
+        IT: 'Italy', US: 'United States', GB: 'United Kingdom', FR: 'France',
+        DE: 'Germany', ES: 'Spain', PT: 'Portugal', NL: 'Netherlands', BE: 'Belgium',
+        AT: 'Austria', CH: 'Switzerland', GR: 'Greece', IE: 'Ireland', NO: 'Norway',
+        SE: 'Sweden', DK: 'Denmark', FI: 'Finland', PL: 'Poland', CZ: 'Czechia',
+        HU: 'Hungary', RO: 'Romania', BG: 'Bulgaria', HR: 'Croatia', RS: 'Serbia',
+        UA: 'Ukraine', RU: 'Russia', TR: 'Turkey', IL: 'Israel', AE: 'United Arab Emirates',
+        SA: 'Saudi Arabia', IR: 'Iran', IN: 'India', PK: 'Pakistan', BD: 'Bangladesh',
+        CN: 'China', JP: 'Japan', KR: 'South Korea', KP: 'North Korea', TW: 'Taiwan',
+        HK: 'Hong Kong', TH: 'Thailand', VN: 'Vietnam', ID: 'Indonesia', MY: 'Malaysia',
+        SG: 'Singapore', PH: 'Philippines', AU: 'Australia', NZ: 'New Zealand',
+        BR: 'Brazil', MX: 'Mexico', AR: 'Argentina', CL: 'Chile', PE: 'Peru', CO: 'Colombia',
+        CA: 'Canada', EG: 'Egypt', MA: 'Morocco', DZ: 'Algeria', NG: 'Nigeria', ZA: 'South Africa',
+        KE: 'Kenya', GH: 'Ghana', ET: 'Ethiopia', CU: 'Cuba', PR: 'Puerto Rico'
+    };
+
+    function ccName(c) { return COUNTRIES[c] || c; }
+    function esc(s) {
+        return String(s).replace(/[&<>"']/g, function (m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+        });
+    }
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function prettyName(q) {
+        return q.split(/\s+/).filter(Boolean).map(function (w) {
+            return w.charAt(0).toUpperCase() + w.slice(1);
+        }).join(' ');
+    }
+    function showErr(m) { errBox.hidden = false; errBox.innerHTML = '<b>Sorry, that did not work:</b> ' + esc(m); }
+    function setStatus(msg) { placeStatus.hidden = !msg; placeStatus.textContent = msg || ''; }
+
+    function renderList(items) {
+        placeList.innerHTML = '';
+        placeMap = {};
+        if (!items.length) {
+            setStatus('No cities match that name. Try a shorter prefix or a different spelling.');
+            return;
+        }
+        var q = placeInput.value.trim().toLowerCase();
+        items.forEach(function (p) {
+            var disp = p.name;
+            if (disp.toLowerCase().indexOf(q) === -1) {
+                disp = p.name + ' (' + prettyName(q) + ')';
+            }
+            var key = disp + ' \u00b7 ' + ccName(p.country) + ' (' + p.country + ')';
+            var opt = document.createElement('option');
+            opt.value = key;
+            placeList.appendChild(opt);
+            placeMap[key] = p;
+        });
+        setStatus('');
+    }
+
+    function maybePick() {
+        var p = placeMap[placeInput.value];
+        if (p) { selectPlace(p); return true; }
+        return false;
+    }
+
+    function selectPlace(p) {
+        state.place = { name: p.name, country: p.country };
+        placeInput.value = p.name;
+        setStatus('');
+        placeChip.hidden = false;
+        placeChip.innerHTML = 'Selected: <b>' + esc(p.name) + '</b> &middot; ' + esc(ccName(p.country)) +
+            ' (' + esc(p.country) + ') &middot; ' + p.latitude.toFixed(4) + ', ' + p.longitude.toFixed(4) +
+            ' &middot; ' + esc(p.timeZone) +
+            ' <button class="x" type="button" title="Clear selection">&times;</button>';
+        placeChip.querySelector('.x').addEventListener('click', function () {
+            state.place = null;
+            placeChip.hidden = true;
+            placeInput.value = '';
+            setStatus('');
+        });
+    }
+
+    function search() {
+        var q = placeInput.value.trim();
+        if (q.length < 2) { setStatus(''); return; }
+        fetch('/api/places?q=' + encodeURIComponent(q) + '&limit=8')
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (state.place) return;
+                renderList(d.results || []);
+            })
+            .catch(function () { showErr('Could not reach the place search service.'); });
+    }
+
+    var debounceT;
+    placeInput.addEventListener('input', function () {
+        if (maybePick()) { clearTimeout(debounceT); return; }
+        if (state.place) { state.place = null; placeChip.hidden = true; }
+        clearTimeout(debounceT);
+        debounceT = setTimeout(search, 350);
+    });
+    placeInput.addEventListener('change', maybePick);
+    placeInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); if (!maybePick()) search(); }
+    });
+    searchBtn.addEventListener('click', function () { if (!maybePick()) search(); });
+
+    $('example').addEventListener('click', function () {
+        year.value = 2010; month.value = 1; day.value = 1;
+        hour.value = 12; minute.value = 0;
+        calcType.value = 'chart';
+        if (state.place && state.place.name === 'Mestre') return;
+        fetch('/api/places?q=mestre&country=IT')
+            .then(function (r) { return r.json(); })
+            .then(function (d) { if (d.results && d.results.length) selectPlace(d.results[0]); });
+    });
+
+    calcType.addEventListener('change', function () {
+        var showHouse = calcType.value === 'chart' || calcType.value === 'houses';
+        houseSysWrap.style.display = showHouse ? '' : 'none';
+        setNoteVisibility();
+    });
+    setNoteVisibility();
+
+    function readDate() {
+        var y = parseInt(year.value, 10), m = parseInt(month.value, 10),
+            d = parseInt(day.value, 10), h = parseInt(hour.value, 10),
+            mi = parseInt(minute.value, 10);
+        if ([y, m, d, h, mi].some(function (v) { return isNaN(v); })) {
+            throw new Error('Please fill in year, month, day, hour and minute.');
+        }
+        if (m < 1 || m > 12) throw new Error('Month must be between 1 and 12.');
+        if (d < 1 || d > 31) throw new Error('Day must be between 1 and 31.');
+        if (h < 0 || h > 23) throw new Error('Hour must be between 0 and 23.');
+        if (mi < 0 || mi > 59) throw new Error('Minute must be between 0 and 59.');
+        return { y: y, m: m, d: d, h: h, mi: mi };
+    }
+
+    calcBtn.addEventListener('click', function () {
+        try {
+            var t = readDate();
+        } catch (e) { showErr(e.message); return; }
+        var qs = 'year=' + t.y + '&month=' + t.m + '&day=' + t.d + '&hour=' + t.h + '&minute=' + t.mi;
+        if (state.place) {
+            qs += '&city=' + encodeURIComponent(state.place.name) + '&country=' + encodeURIComponent(state.place.country);
+        } else {
+            var lo = lon.value.trim(), la = lat.value.trim(), tzV = tz.value.trim();
+            if (!lo || !la) {
+                showErr('Please pick the city from the dropdown list in Step 2 (a green "Selected" tag should appear), or enter longitude and latitude manually.');
+                return;
+            }
+            qs += '&lon=' + encodeURIComponent(lo) + '&lat=' + encodeURIComponent(la);
+            if (tzV) qs += '&tz=' + encodeURIComponent(tzV);
+        }
+        var type = calcType.value;
+        if (type === 'chart' || type === 'houses') qs += '&system=' + houseSys.value;
+        var ep = type === 'chart' ? '/api/chart' : type === 'zodiac' ? '/api/zodiac' : type === 'planets' ? '/api/planets' : '/api/houses';
+
+        errBox.hidden = true;
+        result.hidden = true;
+        fetch(ep + '?' + qs)
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                if (j.error) { showErr(j.error); return; }
+                render(type, j);
+            })
+            .catch(function () { showErr('Could not reach the calculation service.'); });
+    });
+
+    function metaHeader(j) {
+        var place = '';
+        if (j.resolved) place = '<b>' + esc(j.resolved.name) + '</b>, ' + esc(ccName(j.resolved.country)) + ' (' + esc(j.resolved.country) + ')';
+        else place = 'Longitude ' + j.location.longitude + ', latitude ' + j.location.latitude;
+        var local = j.localDate ? (j.localDate + ' ' + j.localTime + (j.timeZone ? ' (' + esc(j.timeZone) + ')' : '')) : (j.date + ' ' + j.time);
+        var utc = (j.utcDate ? j.utcDate : j.date) + ' ' + j.utcTime + (typeof j.utcOffsetMinutes === 'number' ? ' (UTC' + (j.utcOffsetMinutes >= 0 ? '+' : '-') + Math.abs(j.utcOffsetMinutes) + ' min)' : '');
+        return '<div class="placeTitle">' + place + '</div>' +
+            '<div class="meta">' +
+            '<div><b>Local time</b>' + esc(local) + '</div>' +
+            '<div><b>UTC equivalent</b>' + esc(utc) + '</div>' +
+            '<div><b>Julian Day</b>' + j.julianDay + '</div>' +
+            '</div>';
+    }
+
+    function z360HTML(o) {
+        return '<span class="sign">' + esc(o.sign) + '</span> ' + o.degree + '&deg;' + pad(o.minute) + "'" + pad(o.second) + '" <span class="coord">(' + o.longitude + '&deg;)</span>';
+    }
+
+    function z364HTML(o) {
+        return '<span class="sign">' + esc(o.sign) + '</span> &middot; day ' + o.degree + ' of 28 <span class="coord">+ ' + o.minute + "'" + pad(o.second) + '" &middot; 364-coord ' + parseFloat(o.coordinate).toFixed(2) + '</span>';
+    }
+
+    function bodyTable(rows, fmt) {
+        var html = '<table><tr><th></th><th>Position</th></tr>';
+        rows.forEach(function (r) { html += '<tr><td class="planet">' + esc(r[0]) + '</td><td>' + fmt(r[1]) + '</td></tr>'; });
+        return html + '</table>';
+    }
+
+    function renderTables(planets, points, minor, fmt) {
+        var out = '<div class="block"><h3 class="first">Planets</h3>' +
+            bodyTable([
+                ['Sun', planets.sun], ['Moon', planets.moon], ['Mercury', planets.mercury],
+                ['Venus', planets.venus], ['Mars', planets.mars], ['Jupiter', planets.jupiter],
+                ['Saturn', planets.saturn], ['Uranus', planets.uranus], ['Neptune', planets.neptune],
+                ['Pluto', planets.pluto]
+            ], fmt) + '</div>';
+        out += '<div class="block"><h3>Points and angles</h3>' + bodyTable([
+            ['Ascendant', points.asc], ['Midheaven (MC)', points.mc],
+            ['North Node', points.node], ['Black Moon (Lilith)', points.apogee]
+        ], fmt) + '</div>';
+        out += '<div class="block"><h3>Minor bodies</h3>' + bodyTable([
+            ['Ceres', minor.ceres], ['Pallas', minor.pallas], ['Juno', minor.juno],
+            ['Vesta', minor.vesta], ['Chiron', minor.chiron]
+        ], fmt) + '</div>';
+        return out;
+    }
+
+    function renderHouses(j) {
+        var html = '<div class="block"><h3 class="first">Houses &middot; ' + esc(j.houseSystem ? j.houseSystem.name : j.system.name) + '</h3><table><tr><th>House</th><th>Cusp position</th></tr>';
+        for (var i = 1; i <= 12; i++) {
+            var h = j.houses['house' + i];
+            html += '<tr><td class="planet">House ' + i + '</td><td>' + z360HTML(h) + '</td></tr>';
+        }
+        return html + '</table></div>';
+    }
+
+    function render(type, j) {
+        result.hidden = false;
+        var h = '<h2>' + (type === 'zodiac' ? 'Ultracopernican 364 zodiac' : type === 'planets' ? 'Planet positions' : type === 'houses' ? 'Houses' : 'Full chart (classical 360\u00b0)') + '</h2>';
+        h += metaHeader(j);
+        if (type === 'zodiac') {
+            var zt = j.zodiacTime;
+            var sunC = j.planets.sun.coordinate;
+            var gap = ((sunC - zt.dayNumber) % 364 + 364) % 364;
+            if (gap > 182) gap -= 364;
+            var divText;
+            if (Math.abs(gap) < 0.02) {
+                divText = 'Right now the Sun&rsquo;s 364-coordinate (' + sunC.toFixed(2) + ') agrees with the calendar day (&Delta; &asymp; 0): clock and Sun are in step.';
+            } else {
+                var ahead = gap > 0;
+                divText = 'The Sun is ' + (ahead ? 'ahead of' : 'behind') + ' the calendar count by &asymp; ' + Math.abs(gap).toFixed(2) +
+                    ' zodiacal days (&asymp; ' + Math.round(Math.abs(gap * zt.zodiacDay * 24)) + ' conventional hours): the calendar counts uniform 1/364 days, while the Sun follows the real, varying orbital speed around the Earth (the <i>equation of time</i>). Real astronomy &mdash; not an error.';
+            }
+            h += explainerHTML();
+            h += '<div class="zcard"><div class="big">' + esc(zt.sign) + ' <span>&middot; day ' + zt.dayInSign + ' of 28</span></div>' +
+                '<div class="small">' + pad(zt.hour) + ':' + pad(zt.minute) + ':' + pad(zt.second) + ' into the day &middot; day ' + zt.day + ' of the 364-day zodiacal year</div>' +
+                '<div class="note">The zodiacal year begins at the real winter solstice and is split into 13 signs of 28 days. One zodiacal day is 1/364 of the tropical year &asymp; 1.0034 conventional days; the full year is &asymp; ' + zt.zodiacYearLengthDays.toFixed(4) + ' conventional days.</div>' +
+                '<div class="small" style="margin-top:8px">' + divText + '</div></div>';
+            h += renderTables(j.planets, j.points, j.minorPlanets, z364HTML);
+        } else if (type === 'chart') {
+            h += renderTables(j.planets, j.points, j.minorPlanets, z360HTML);
+            h += renderHouses(j);
+        } else if (type === 'planets') {
+            h += renderTables(j.planets, j.points, j.minorPlanets, z360HTML);
+        } else {
+            h += renderHouses(j);
+        }
+        h += '<p style="margin-top:14px;font-size:12.5px;color:#8aa0bb">Coordinates are rounded by the engine; the classical zodiac is shown as sign / degree / minute / second.</p>';
+        result.innerHTML = h;
+    }
+})();
+</script>
+</body>
+</html>

@@ -1,9 +1,11 @@
 const express = require('express');
 const fs = require('fs');
 const vm = require('vm');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
+app.get('/app', (req, res) => res.sendFile(path.join(__dirname, 'public', 'app.html')));
 // Home page with API documentation
 app.get('/', (req, res) => {
     res.send(`<!DOCTYPE html>
@@ -23,6 +25,10 @@ app.get('/', (req, res) => {
     <h1>js_astro API</h1>
     <p>Astrological calculation library - Japanese original by Yoshihiro Sakai<br>
     Fork with English translation and local time support.</p>
+
+    <h2>Calculator interface</h2>
+    <p><a href="/app" style="display:inline-block;margin:6px 0;padding:14px 24px;background:#00d4ff;color:#0b1420;font-weight:bold;font-size:17px;text-decoration:none;border-radius:8px">&#128640; Open the online calculator</a><br>
+    <em style="color:#9aa4b8;font-size:13px">Pick a date and time, search your city - chart and Ultracopernican 364 zodiac explained in readable text.</em></p>
 
     <h2>Endpoints</h2>
 
