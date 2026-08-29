@@ -103,6 +103,23 @@ The idea, in the spirit of Copernicus (geometry over convention):
 - **1 zodiac day = year / 364** (≈ 1.003414 conventional days). Hours, minutes and seconds scale from the zodiac day: the *second* becomes a variable convention adapting to the real geometry. The sky is never bent to fit the calendar.
 - A zodiac time is expressed as a pure position: e.g. `Cancer 00 14:58:23` means the Sun-cycle has reached 14h58m23s after the start of Cancer 00 = 0° (the solstice).
 
+### Why 364? Why the winter solstice? Why 13 signs?
+
+- **364, not 360.** 364 is far closer to the astronomer's year (≈ 365.2427 days)
+  than 360, so one zodiac day is almost exactly one real day: the calendar and
+  the sky finally speak the same language.
+- **Origin = the winter solstice (0° Capricorn).** We celebrate the new year on a
+  date with no astronomical meaning at all — yet it happens to fall almost on the
+  winter solstice, with all its symbolic weight. The 364 zodiac makes that anchor
+  *exact*: the year begins when the Sun really reaches 0° Capricorn. No more
+  arbitrary calendar, just the sky.
+- **13 signs.** Humanity is made of people who should meet each other face to
+  face — without oppositions, or harmonic and disharmonic alignments. In this
+  13-sign system the aspects are no longer the lens: each person reflects the
+  planets and the signs in a unique, personal way, instead of being set in
+  constant contrast with the others. And **Ophiuchus — the great forgotten one**
+  — finally takes his place as the 13th sign the tradition left out.
+
 Reversible conversions `lon ↔ z` and the full description helpers live in `src/zodiac.js` (uses `calPlaPos`/`correctTDT`/`calJDz`/`cnvCalendar`).
 
 REST endpoint: `GET /api/zodiac?year&month&day&hour&minute&lon&lat` returns planetary positions and points as 364-coordinates plus `zodiacTime`. Available both in the Express server and the Cloudflare Worker.
