@@ -1,6 +1,7 @@
 node_modules/
 session-*.md
 lettera/
+letter.txt
 
 # local test/scratch files
 cities_list.csv
