@@ -150,7 +150,19 @@ Coordinates internal to the engine are expressed in **degrees-minutes-seconds sy
 the API accepts both DMS (`45°15'30"N`) and pure degree fractions (`45.2583`).
 
 ## Demonstration
-To test this library, try [this](http://astsakai.halfmoon.jp/fortune/platest_js.html).
+
+To test the original library, try [this](http://astsakai.halfmoon.jp/fortune/platest_js.html) (Japanese).
+
+In the spirit of this fork — the **Ultracopernican revolution**, where the sky
+stays whole and the calendar adapts — the demonstration we propose is the live
+calculator:
+
+> **https://js-astro-api.js-astro.workers.dev/app**
+
+No setup, no demo page to host: open it, pick a date and place, and the chart
+is computed on the fly by the deployed worker — geometry first, the clock bends
+to the real sky, never the other way around. The [API endpoints](https://js-astro-api.js-astro.workers.dev/)
+serve the same engine for developers.
 
 ## Errata for Leaflet written in Japanese
 This library has a leaflet, and this leaflet has some error. Errata is [here](https://github.com/astsakai/js_astro/wiki/support).

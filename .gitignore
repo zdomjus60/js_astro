@@ -1,3 +1,10 @@
 node_modules/
 session-*.md
 lettera/
+
+# local test/scratch files
+cities_list.csv
+cities_list.txt
+example.txt
+prova_workers.txt
+test.txt
