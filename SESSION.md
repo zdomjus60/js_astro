@@ -10,8 +10,7 @@ Progetto = **Rivoluzione Ultracopernicana**: zodiaco alternativo in **364 parti*
 È un'**alternativa credibile**, NON una sostituzione dell'astrologia classica.
 
 - **Live URL: https://js-astro-api.js-astro.workers.dev**
-  (deployato con archivio completo città + interfaccia `/app` + CTA evidenziata
-  in home, version `3b1d6107`, gzip 1923 KiB).
+  (deployato, versione corrente `dd936029`, gzip 2887.95 KiB; rate limit 100/h/IP).
 - ⚠️ **Bug datalist (fixato, version `00950cb5`)**: il `<datalist>` nativo
   nasconde le voci che non contengono la sottostringa digitata. Es. `padova`:
   l'API giustamente metteva Padua al 1° posto (alias curato `padova`), ma il
@@ -168,8 +167,9 @@ Risposta base include `location`, `resolved` (se da city), `localDate/Time`,
   contiene `parseParams`, fetch handler (routes), `homePage` HTML.
 - `server.js` — REST Express con sandbox vm (stessi file src); `resolveParams`,
   route `/api/places`, home HTML, log endpoint.
-- `lettera/` (gitignored) — `lettera_sakai_{IT,EN,JP}.txt` aggiornate con
-  tz/IANA, city/country, DMS e `/api/places`.
+- `letter.txt` (root, **gitignored**) — bozza lettera a Sakai (nome corretto:
+  Domenico Mustara), la medesima dell'issue inviata.
+- `lettera/` (gitignored) — versioni precedenti non più in uso.
 - `README.md` — sezione REST API + place search + notazioni coordinate.
 - `worker.js` — bundle GENERATO (non editare; vedi comandi).
 - `wrangler.toml` — `name=js-astro-api`, `main=worker.js`. Autenticazione OAuth
@@ -186,27 +186,62 @@ Risposta base include `location`, `resolved` (se da city), `localDate/Time`,
 
 ## Stato git
 
-- Commit `02ca63a` ("Add tz support, GeoNames city lookup and coordinate
-  notation to API") PUSHATO su master (9 file, +41399). Worker bundle incluso.
-- ⚠️ Bug lat/lon scambiati nel lookup `city` trovato e CORRETTO dopo il primo
-  deploy (si usava `lo=pl[3];la=pl[4]` ma la riga è `[name,ascii,cc,lat,lon,tz,pop]`):
-  ora `lo=pl[4];la=pl[3]` in `build-worker.js` e `server.js`. Redeployato
-  (version `98e13b01`). Verifica: ASC Sagittarius 23°04'42" per Isola della Scala.
-- `SESSION.md`, `AGENTS.md`, `lettera/`, scratch (`prova_workers.txt`, `test.txt`)
-  NON tracciati. `lettera/` in .gitignore.
-- ⬆️ **In corso (deployato ma NON committato)**: archivio città ampliato a
-  **mondo pop≥5000 + IT pop≥1500 = 72324 città** (era 11463 a pop≥100000).
-  Modificati `build-places.js`, `src/places.js`, `worker.js` (gzip 1917 KiB,
-  entro il limite di 3 MB). Live: version `42875dbc`, verificato worongary AU
-  e sasbach DE. Sorgenti in `/tmp/cities1000.txt` + `/tmp/IT.txt`.
+- ⬆️ Tutto **committato e pushato** fino a `5bece3a` (master allineato a origin).
+  Commit recenti in ordine:
+  - `7bada65` UI `/app` + alias città estesi (132.816) + GUIDE.md
+  - `3d4c033` .gitignore scratch (`cities_list.*`, example/prova/test.txt) + Demonstration→live
+  - `2201a6c` credito pagina demo originale dell'autore nel README
+  - `12401a4` rate limiting 429 (worker + server, deploy `dd936029`)
+  - `1d52adc` scopo del fork esplicito nel README + `examples/python_chart.py`
+  - `5bece3a` sezione "Why 364 / why the solstice / why 13 signs"
+- **Repo PUBBLICO**: https://github.com/zdomjus60/js_astro (descrizione aggiornata:
+  "English fork for non-Japanese speakers, Ultracopernican 364-part zodiac").
+  Push: `git push origin master`.
+- Locali non tracciati / gitignorati: `letter.txt` (bozza lettera), `lettera/`,
+  scratch di test, `SESSION.md`/`AGENTS.md`.
 - Precedenti: d3e5bc7 → faf2b9f → e3806b5 → 02ca63a.
 
-## Da fare / possibili prossimi passi
+## Comunicazione con l'autore (Yoshihiro Sakai) — stato
 
-1. Invio lettera a Sakai (issue https://github.com/astsakai/js_astro/issues
-   o form https://astsakai.halfmoon.jp/ver5/contact — meglio JP; il sito filtra spam).
-   Lettere aggiornate (tz/city/DMS/places) pronte in `lettera/`.
-2. Invio BUGS.md/issue-draft all'upstream astsakai? (da confermare).
-3. Front-end: search box con disambiguazione omonimi (usa `/api/places`).
-4. Test astrologici più profondi nel sistema 364; aspetti in coordinate z;
-   ruota delle case nel sistema 364.
+- ⏳ **In attesa di risposta** (nessuna fino a 29 ago 2026 serata).
+- Tentativi fatti:
+  1. Email `yoshihiro@astsakai.halfmoon.jp` → **indirizzo non riconosciuto**
+     (bounce). Il sito conferma: filtro anti-spam aggressivo + restrizioni
+     accesso → chiede di usare il **modulo** o canali non-email.
+  2. Modulo https://astsakai.halfmoon.jp/ver5/contact → **HTTP 403 Forbidden
+     (SAKURA Internet)**, METHOD POST rifiutato (probabile blocco IP/straniero;
+     peggiora se la pagina è tradotta col browser). Riprovare non serve a molto.
+  3. ✅ **Inviata come GitHub issue** su https://github.com/astsakai/js_astro
+     (canale che sicuramente arriva: notifica via GitHub). Bozza = contenuto di
+     `letter.txt` (nome corretto: **Domenico Mustara**; nascita Isola della Scala
+     08/06/1960 20:20). Comprende: fork inglese + 364; **perché 364 / perché
+     solstizio / perché 13 segni**; clausola "se non approvi → critiche o
+     rimozione/rinomina fork o nota di distanza"; credito pagina demo; nota
+     personale carta natale.
+- Alternativa ancora aperta se non risponde: **Bluesky @astsakai.bsky.social**
+  (pubblico, non bloccato) con post/DM breve.
+- Esiti possibili e scelte: (a) critica → approfondire/convergere; (b) richiesta
+  rimozione/rinomina → accettare senza polemiche; (c) silenzio → proseguire.
+
+## Da fare / prossimi passi (fase 2 — proposta, da decidere al rientro)
+
+Obiettivo proposto: **ricalcolare i temi natali di personaggi noti con date/ore
+verificate (Rodden AA/A, anche B)** e stimare se il **riposizionamento dei
+pianeti nei segni (in particolare Ofiuco)** mostra dettagli non prima evidenti.
+
+- **Piano tecnico**: `examples/batch_charts.py` che legge un CSV
+  `nome,data,ora,luogo,sorgente,rating` e per ogni pianeta/Punto produce il
+  segno tropicale vs segno 364 (via `/api/chart` + `/api/zodiac` o engine
+  locale). Campione ~50–100 biografie; focus Sole/Luna/ASC che finiscono in
+  **Ofiuco**; statistica dei "cambi di segno".
+- ⚠️ **Cautela metodologica (da tenere):** il cielo non cambia, cambia la
+  cornice (ancoraggio solstizio + 13×28 + equazione del tempo). Differenze
+  osservabili = (1) **flip di segno ai bordi** (~27,7° di longitudine per segno;
+  fascia Ofiuco ≈ 210–240°) e (2) divergenza equazione-del-tempo. Ad altezza
+  "pianeta in segno" l'incertezza sull'ora di nascita è trascurabile (10′ ≈
+  0,02° sul Sole, 0,09° sulla Luna; l'ASC cambia ~2° ma non è un pianeta) →
+  anche le date **B** vanno bene per questo livello.
+- **Dati**: fonte consigliata Astro-Databank / astro.com (rating Rodden AA/A/B).
+  Verificare licenza dei dati prima dell'uso.
+- Altro backlog: rifinire search box `/app` (datalist già funzionante),
+  aspetti in coordinate z, ruota delle case nel sistema 364.
