@@ -120,6 +120,15 @@ Risposta base include `location`, `resolved` (se da city), `localDate/Time`,
   con valori verificati live). Esempi MOLTO verificati su live:
   `Cancer 00 14:58:23`, Sun `Cancer 1(+28) 50'12"`, ASC `Sagittarius 23°04'42"`
   (NB: differisce dai `23°08'14"` del vecchio README — verificato live).
+- `examples/python_chart.py` — script Python **solo stdlib** (niente pip)
+  scaricabile dai tester: `--date/--time/--city/--country/--lon/--lat/--tz/
+  --system/--zodiac/--raw/--base`. Parser botta 429 amichevole. Testato sui 3
+  scenari (carta di riferimento OK, Tokyo senza country, 364 con Ofiuco).
+- README: in cima "Purpose of this fork" esplicito → (1) aprire il motore ai
+  **non giappofoni** (tutto in inglese), (2) **modalità di computo a 13 segni**
+  (Ultracopernicana 364, alternativa credibile).
+- **Repo reso di nuovo PUBBLICO** su GitHub (zdomjus60/js_astro) con descrizione
+  aggiornata allo scopo del fork. Push effettuato fino a `12401a4`.
 
 ## Time zone (src/tz.js)
 

@@ -1,6 +1,18 @@
 # js_astro
 Sample code for astrological calculation written by JavaScript.
 
+> **Purpose of this fork.** The original library is Japanese. This fork has two
+> clear goals:
+> 1. **Open the engine to non-Japanese speakers** — every comment, document,
+>    interface and API answer is in English, so the offering is no longer
+>    limited to the Japanese-speaking world;
+> 2. **Introduce a different computation mode based on 13 signs** — the
+>    *Ultracopernican 364-part zodiac* (13 signs × 28 = 364 parts, origin = the
+>    **real winter solstice**), a new 364-coordinate system for every planet and
+>    point, plus a *zodiac time* that follows the actual solar year. It is
+>    presented as a **credible alternative** to the classical 12-sign zodiac,
+>    not a replacement.
+>
 > **Try it online** — the calculator is live at
 > **https://js-astro-api.js-astro.workers.dev/app** (readable interface, no
 > technical knowledge needed: pick date/time, search your city, get the chart

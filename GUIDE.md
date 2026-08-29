@@ -190,7 +190,21 @@ Every reply carries the resolved input first, so results are always traceable:
 
 ### 2.6 Examples in different languages
 
-**Python** (with the `requests` package — `pip install requests`):
+> **Python — fastest way:** download the ready-to-run
+> [`examples/python_chart.py`](examples/python_chart.py). It uses **only the Python
+> standard library** (no `pip install`) and prints a readable chart:
+>
+> ```bash
+> python3 examples/python_chart.py --date 1960-06-08 --time 20:20 --city "Isola della Scala" --country IT
+> python3 examples/python_chart.py --date 2010-01-01 --time 13:00 --city Tokyo
+> python3 examples/python_chart.py --date 1960-06-08 --time 20:20 --city Mestre --country IT --zodiac
+> ```
+>
+> Add `--zodiac` for the 364-part zodiac, `--raw` to see the underlying JSON.
+> Coordinates work too: `--lon 11 --lat 45.19 --tz Europe/Rome`.
+
+If you prefer to build the call yourself, the two-line recipe with the
+`requests` package (`pip install requests`):
 
 ```python
 import requests
@@ -211,7 +225,7 @@ print("ASC:", data["houses"]["house1"]["formatted"])
 print("UTC:", data["utcDate"], data["utcTime"], data["timeZone"])
 ```
 
-**Python** (standard library only, no dependencies):
+With only the standard library (no `requests`):
 
 ```python
 import json
@@ -228,6 +242,12 @@ with urlopen(BASE + "/api/zodiac?" + params) as resp:
     data = json.load(resp)
 print("Zodiac time:", data["zodiacTime"]["formatted"])   # Cancer 00 14:58:23
 ```
+
+**How the flow works** (it is the same in every language): build an HTTP request
+with the parameters from section 2.3, the API answers **plain JSON**, and you
+read it like any dictionary: `data["planets"]["sun"]["formatted"]`,
+`data["zodiacTime"]["formatted"]`, `data["houses"]["house1"]`. There is nothing
+else to install or to sign up for — the worker is public and free.
 
 **JavaScript / Node**:
 
