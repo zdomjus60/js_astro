@@ -5,6 +5,36 @@ const path = require('path');
 
 const app = express();
 app.use(express.json());
+
+// Simple per-IP rate limiting (good web citizenship + accidental-abuse guard).
+// Fixed window per hour, keyed by client IP. Mirrors the Cloudflare Worker.
+// Override with RATE_LIMIT_PER_HOUR (e.g. RATE_LIMIT_PER_HOUR=5 for tests).
+const RATE_WINDOW_MS = 3600000;
+const RATE_MAX_BUCKETS = 20000;
+const RATE_LIMIT_PER_HOUR = parseInt(process.env.RATE_LIMIT_PER_HOUR || '100', 10);
+const rateHits = new Map();
+app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') return next();
+    const ip = req.headers['cf-connecting-ip'] || req.ip ||
+               req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    const slot = Math.floor(now / RATE_WINDOW_MS);
+    const rec = rateHits.get(ip);
+    if (!rec || rec.slot !== slot) {
+        if (rateHits.size >= RATE_MAX_BUCKETS) rateHits.clear();
+        rateHits.set(ip, { slot, count: 1 });
+        return next();
+    }
+    rec.count++;
+    if (rec.count > RATE_LIMIT_PER_HOUR) {
+        return res.status(429).set('Retry-After', '3600').json({
+            error: 'Rate limit exceeded. Please slow down and retry in a while.',
+            perIpLimitPerHour: RATE_LIMIT_PER_HOUR,
+            retryAfterSeconds: 3600
+        });
+    }
+    return next();
+});
 app.get('/app', (req, res) => res.sendFile(path.join(__dirname, 'public', 'app.html')));
 // Home page with API documentation
 app.get('/', (req, res) => {

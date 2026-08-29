@@ -21,6 +21,29 @@ const appPage = fs.readFileSync('public/app.html', 'utf-8');
 const handler = `
 const APP_PAGE = ${JSON.stringify(appPage)};
 
+// Per-IP rate limiting (good web citizenship + accidental-abuse guard).
+// Cloudflare's own Rate Limiting product is not on the free plan, so we keep
+// a simple fixed-window counter in the worker's memory. It is not a hard
+// security boundary across all isolates (memory is per-isolate), but it
+// stops accidental loops and answers 429 the polite way. The default of 100
+// requests per hour is generous for a human and configurable via
+// RATE_LIMIT_PER_HOUR env var.
+const RATE_LIMIT_PER_HOUR = 100;
+const RATE_WINDOW_MS = 3600000;
+const RATE_MAX_BUCKETS = 20000;
+const rateHits = new Map();
+function rateLimited(ip, now, limit) {
+    const slot = Math.floor(now / RATE_WINDOW_MS);
+    const rec = rateHits.get(ip);
+    if (!rec || rec.slot !== slot) {
+        if (rateHits.size >= RATE_MAX_BUCKETS) rateHits.clear();
+        rateHits.set(ip, { slot: slot, count: 1 });
+        return false;
+    }
+    rec.count = rec.count + 1;
+    return rec.count > limit;
+}
+
 const ZODIAC = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const ZODIAC_ABBR = ['Ar','Ta','Ge','Cn','Le','Vi','Li','Sc','Sg','Ca','Aq','Pi'];
 const HOUSE_NAMES = {1:'Placidus',2:'Campanus',3:'Regiomontanus',4:'Koch',5:'Topocentric',6:'Axial',7:'Morinus'};
@@ -169,13 +192,36 @@ h1{color:#00d4ff}a{color:#ffd700}code{background:#16213e;padding:2px 6px;border-
 </body></html>\`;
 
 export default {
-    async fetch(request) {
+    async fetch(request, env) {
         const url = new URL(request.url);
         const path = url.pathname;
 
         if (request.method === 'OPTIONS') {
             return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,OPTIONS', 'Access-Control-Allow-Headers': '*' } });
         }
+        {
+            const ip = request.headers.get('CF-Connecting-IP') ||
+                       (request.headers.get('X-Forwarded-For') || '').split(',')[0].trim() ||
+                       'unknown';
+            const limit = env && env.RATE_LIMIT_PER_HOUR
+                ? (parseInt(env.RATE_LIMIT_PER_HOUR, 10) || RATE_LIMIT_PER_HOUR)
+                : RATE_LIMIT_PER_HOUR;
+            if (rateLimited(ip, Date.now(), limit)) {
+                return new Response(JSON.stringify({
+                    error: 'Rate limit exceeded. Please slow down and retry in a while.',
+                    perIpLimitPerHour: limit,
+                    retryAfterSeconds: Math.ceil(RATE_WINDOW_MS / 1000)
+                }), {
+                    status: 429,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Retry-After': '3600'
+                    }
+                });
+            }
+        }
+
         if (path === '/' || path === '/index.html') {
             return new Response(homePage, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
         }

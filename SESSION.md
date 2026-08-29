@@ -128,6 +128,22 @@ Risposta base include `location`, `resolved` (se da city), `localDate/Time`,
 - Bug risolti: `setUTCFullYear` ignora ora/min → si usa `setUTCHours` espliciti.
 - tz sconosciuto → 400 con hint a https://www.iana.org/time-zones.
 
+## Rate limiting (429)
+
+- Motivazione (deepseek): il piano free Cloudflare NON include il prodotto Rate
+  Limiting; guardia "buon cittadino del web" vs abusi accidentali (loop di
+  refresh). Non è un confine di sicurezza (la memoria Map è per-isolate).
+- Implementato in worker (`build-worker.js`, handler iniettato) E in `server.js`
+  (middleware express). Finestra fissa per ora per IP, default **100/h**, override
+  via env `RATE_LIMIT_PER_HOUR`. IP da `CF-Connecting-IP` (fallback
+  `X-Forwarded-For`, poi `unknown` condiviso). OPTIONS non conteggiate.
+- Risposta 429 JSON: `{error, perIpLimitPerHour, retryAfterSeconds}` + header
+  `Retry-After: 3600`. Pulizia buckets oltre 20000.
+- Testato: server locale (limite 5 → 5×200 poi 429 con Retry-After), worker
+  offline ESM (env 3 → 3×200 poi 429), fairness IP diversi + fallback no-IP,
+  live 3×200 con chart di riferimento invariata (Sun Gemini 17°58'13").
+- Deploy live attuale: `dd936029-a08d-475d-940e-fc2cf455b44c` (gzip 2887.95 KiB).
+
 ## File chiave
 
 - `src/zodiac.js` — modulo 364 (source of truth Rivoluzione). `lonToZodiac364`,

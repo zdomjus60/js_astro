@@ -362,6 +362,12 @@ Invalid requests return **HTTP 400** with a `{ "error": ..., "hint": ... }` body
 { "error": "Invalid lon/lat (use decimal degrees or DMS, e.g. 45°15'30\"N)" }
 ```
 
+To stay a good citizen of the web, the service answers **HTTP 429 Too Many
+Requests** when a single IP exceeds **100 requests per hour** (a generous limit
+for a human — it only stops accidental refresh loops). The response includes a
+`Retry-After` header; the server-local copy follows the same rule and can be
+tuned with the `RATE_LIMIT_PER_HOUR` environment variable.
+
 ### 2.11 Running the server locally
 
 ```bash
