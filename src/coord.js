@@ -70,3 +70,7 @@ function parseCoord(v) {
     val = val * sign;
     return (isFinite(val) && Math.abs(val) <= 180) ? val : NaN;
 }
+
+export {
+  parseCoord
+}

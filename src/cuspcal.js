@@ -1,3 +1,21 @@
+import {
+  cos4deg,
+  atan24deg,
+  acos4deg,
+  tan4deg,
+  sin4deg,
+  mod360
+} from './math.js'
+
+import {
+  calJD,
+  calLST,
+  calOblique
+} from './astronomy.js'
+
+import {
+  calGeoPoint
+} from './hekichan.js'
 /*
  * House cusp calculation routine
  * Copyright (c) 1999-2001, 2017 Yoshihiro Sakai & Sakai Institute of Astrology
@@ -288,4 +306,8 @@ function calHouseMorinus(LST, Lat, obl){
 	}
 
 	return cusp;
+}
+
+export {
+  calHouseCusp2
 }

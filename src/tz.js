@@ -99,3 +99,8 @@ function localCivilToUtc(y, m, d, h, mi, tz) {
 		offsetMinutes: Math.round((local - guess) / 60000)
 	};
 }
+
+export {
+  isValidIANAZone,
+  localCivilToUtc
+}

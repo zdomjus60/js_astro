@@ -1,7 +1,32 @@
-const express = require('express');
-const fs = require('fs');
-const vm = require('vm');
-const path = require('path');
+import express from 'express';
+import path from 'path';
+
+import {
+  calPlanetPosition2
+} from './src/hekichan.js'
+
+import {
+  calHouseCusp2
+} from './src/cuspcal.js'
+
+import {
+  describeZodiac364,
+  jdToZodiacTime
+} from './src/zodiac.js'
+
+import {
+  isValidIANAZone,
+  localCivilToUtc
+} from './src/tz.js'
+
+import {
+  parseCoord
+} from './src/coord.js'
+
+import {
+  findPlace,
+  searchPlaces
+} from './src/places.js'
 
 const app = express();
 app.use(express.json());
@@ -35,7 +60,7 @@ app.use((req, res, next) => {
     }
     return next();
 });
-app.get('/app', (req, res) => res.sendFile(path.join(__dirname, 'public', 'app.html')));
+app.get('/app', (req, res) => res.sendFile(path.join(import.meta.dirname, 'public', 'app.html')));
 // Home page with API documentation
 app.get('/', (req, res) => {
     res.send(`<!DOCTYPE html>
@@ -125,30 +150,6 @@ app.get('/api/places', (req, res) => {
     const results = searchPlaces(q, cc, isNaN(lim) ? 10 : lim);
     res.json({ query: q, country: cc || '', count: results.length, results });
 });
-
-// Load astro library
-const files = [
-    'src/math.js',
-    'src/astronomy.js',
-    'src/geodata.js',
-    'src/pluto.js',
-    'src/hekichan.js',
-    'src/metako.js',
-    'src/cuspcal.js',
-    'src/zodiac.js',
-    'src/tz.js',
-    'src/coord.js',
-    'src/places.js'
-];
-
-const sandbox = { Math, console, Array, Number, String, parseInt, parseFloat, isNaN, Date, Intl };
-vm.createContext(sandbox);
-for (const f of files) {
-    vm.runInContext(fs.readFileSync(f, 'utf-8'), sandbox, { filename: f });
-}
-
-const { calPlanetPosition2, calHouseCusp2, describeZodiac364, jdToZodiacTime,
-        isValidIANAZone, localCivilToUtc, parseCoord, findPlace, searchPlaces } = sandbox;
 
 // Helper: convert longitude to zodiac
 function toZodiac(lon) {

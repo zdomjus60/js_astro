@@ -1,3 +1,24 @@
+import {
+  tan4deg,
+  deg2rad,
+  sin4deg,
+  cos4deg,
+  mod360,
+  calChebyshevPolynomial
+} from './math.js'
+
+import {
+  calJD,
+  calLST,
+  correctTDT,
+  calTimeCoefficient,
+  convertGeocentric,
+  convertOrbitalElement,
+  orbitWork,
+  calOblique,
+  calNutation
+} from './astronomy.js'
+
 /*
  * Celestial position calculation engine "Hapy Hekichan" version 1.00-j08
  * Copyright (c) 1999-2004, 2017, 2021, 2024, 2025 Yoshihiro Sakai & Sakai Institute of Astrology
@@ -1152,3 +1173,8 @@ function calAfterLunarReturn{
 	CnvCalendar($tJD + 9.0 / 24.0);
 }
 */
+
+export {
+  calGeoPoint,
+  calPlanetPosition2
+}

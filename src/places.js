@@ -205235,3 +205235,8 @@ function searchPlaces(city, country, limit) {
     }
     return out;
 }
+
+export {
+  findPlace,
+  searchPlaces
+}
